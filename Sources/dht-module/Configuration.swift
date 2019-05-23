@@ -38,9 +38,11 @@ struct Configuration {
     // MARK: Static Function
 
     private static func parseInetAddress(_ inetAddr: String) -> (String, Int) {
-        if inetAddr.starts(with: "[") {
+        let bracketPattern = #"\[(.*?)\]"#
+        let bracketRange = inetAddr.range(of: bracketPattern, options: .regularExpression)
+        if let bracketRange = bracketRange {
             // IPv6
-            var ip = String(inetAddr.split(separator: ":")[0])
+            var ip = String(inetAddr[bracketRange])
             ip.removeFirst()
             ip.removeLast()
             // Taken from https://www.regextester.com/96774
@@ -48,7 +50,7 @@ struct Configuration {
             guard ip.range(of: ipv6Pattern, options: .regularExpression) != nil else {
                 fatalError("\(ip) is not a valid IPv6 address")
             }
-            guard let port = Int(String(inetAddr.split(separator: ":")[1])) else {
+            guard let port = Int(String(inetAddr[bracketRange.upperBound...].filter({ $0 != ":" }))) else {
                 fatalError("Invalid port in \(inetAddr)")
             }
             return (ip, port)
@@ -72,7 +74,7 @@ struct Configuration {
 
         var currentSection = [String: String]()
         var currentSectionName: String?
-        
+
         for line in lines {
             if line.first == "[" && line.last == "]" {
                 // Section header
