@@ -1,12 +1,27 @@
 import Foundation
+import SwiftCLI
 
-guard CommandLine.arguments.count >= 3, CommandLine.arguments[1] == "-c" else {
-    print("Unexpected arguments. Usage: dht-module -c <path to config>")
-    exit(1)
+class DHTCommand: Command {
+
+    let configKey = Key<String>("-c", "--config", description: "Path to a custom config file")
+
+    func execute() throws {
+        guard let configPath = configKey.value else {
+            return
+        }
+
+        guard let config = Configuration(filePath: configPath) else {
+            fatalError("Loading the config from the config file at \(configPath) failed")
+        }
+        stdout <<< config.apiAddress
+    }
+
+    var name: String {
+        return "dht-module"
+    }
+
 }
 
-let configPath = CommandLine.arguments[2]
-guard let config = Configuration(filePath: configPath) else {
-    fatalError("Loading the config from the config file at \(configPath) failed")
-}
+let cli = CLI(singleCommand: DHTCommand())
+cli.goAndExit()
 

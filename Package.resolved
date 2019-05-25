@@ -18,6 +18,15 @@
           "revision": "96e8335180ca61c7187efe47058a1c99eadaf265",
           "version": "1.1.0"
         }
+      },
+      {
+        "package": "SwiftCLI",
+        "repositoryURL": "https://github.com/larsschwegmann/SwiftCLI.git",
+        "state": {
+          "branch": "master",
+          "revision": "0977f3595f371a805b36595d40c127efa5c60272",
+          "version": null
+        }
       }
     ]
   },

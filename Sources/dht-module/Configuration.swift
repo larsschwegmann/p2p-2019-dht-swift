@@ -9,7 +9,7 @@ struct Configuration {
         static let apiAddress = "api_address"
     }
 
-    // MARK: COnfiguration Properties
+    // MARK: Configuration Properties
 
     var apiAddress: String
     var apiPort: Int
