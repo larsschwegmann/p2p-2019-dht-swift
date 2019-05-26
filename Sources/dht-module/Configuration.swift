@@ -1,43 +1,109 @@
 import Foundation
 
+enum ConfigurationError: LocalizedError {
+    case missingDHTConfigSection(filePath: String)
+    case missingRequiredConfigKeyValuePair(key: String)
+    case invalidINIFileFormat
+    case invalidIPv4(String)
+    case invalidIPv6(String)
+    case invalidPort(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingDHTConfigSection(let filePath):
+            return "The Config Section for the DHT module is missing from config file at \(filePath)"
+        case .missingRequiredConfigKeyValuePair(let key):
+            return "The DHT config section is missing the following required key/value pair: \(key)"
+        case .invalidINIFileFormat:
+            return "The given configuration file is not a valid INI file"
+        case .invalidIPv4(let addr):
+            return "\(addr) is not a valid IPv4 address"
+        case .invalidIPv6(let addr):
+            return "\(addr) is not a valid IPv6 address"
+        case .invalidPort(let addr):
+            return "The specified port in \(addr) is not valid"
+        }
+    }
+}
+
 struct Configuration {
 
     // MARK: Private ConfigKey struct
 
     private struct ConfigKey {
         static let dhtSection = "dht"
+
         static let apiAddress = "api_address"
+        static let listenAddress = "listen_address"
+        static let workerThreads = "worker_threads"
+        static let timeout = "timeout"
+        static let fingers = "fingers"
+        static let stabilizationInterval = "stabilization_interval"
     }
 
     // MARK: Configuration Properties
 
     var apiAddress: String
     var apiPort: Int
+    var listenAddress: String
+    var listenPort: Int
+    var workerThreads: Int = 4
+    var timeout: Int = 300000
+    var fingers: Int = 128
+    var stabilizationInterval: Int = 60
 
     // MARK: Initializers
 
-    init?(filePath: String) {
+    init?(filePath: String) throws {
         guard let configData = FileManager.default.contents(atPath: filePath),
             let configString = String(data: configData, encoding: .utf8) else {
             return nil
         }
 
-        let configDict = Configuration.buildDictionary(configContents: configString)
+        let configDict = try Configuration.buildDictionary(configContents: configString)
 
         guard let dhtConfig = configDict[ConfigKey.dhtSection] else {
-            fatalError("Config Section for the DHT module is missing from config file at \(filePath)")
+            throw ConfigurationError.missingDHTConfigSection(filePath: filePath)
         }
 
         guard let apiAddressPort = dhtConfig[ConfigKey.apiAddress] else {
-            fatalError("[DHT] config section has no \(ConfigKey.apiAddress) key/value pair")
+            throw ConfigurationError.missingRequiredConfigKeyValuePair(key: ConfigKey.apiAddress)
         }
 
-        (self.apiAddress, self.apiPort) = Configuration.parseInetAddress(apiAddressPort)
+        (self.apiAddress, self.apiPort) = try Configuration.parseInetAddress(apiAddressPort)
+
+        guard let listenAddressPort = dhtConfig[ConfigKey.listenAddress] else {
+            throw ConfigurationError.missingRequiredConfigKeyValuePair(key: ConfigKey.listenAddress)
+        }
+
+        (self.listenAddress, self.listenPort) = try Configuration.parseInetAddress(listenAddressPort)
+
+        // Optional config parameters
+
+        if let workerThreadsString = dhtConfig[ConfigKey.workerThreads],
+            let workerThreads = Int(workerThreadsString) {
+            self.workerThreads = workerThreads
+        }
+
+        if let timeoutString = dhtConfig[ConfigKey.timeout],
+            let timeout = Int(timeoutString) {
+            self.timeout = timeout
+        }
+
+        if let fingersString = dhtConfig[ConfigKey.fingers],
+            let fingers = Int(fingersString) {
+            self.fingers = fingers
+        }
+
+        if let stabilizationIntervalString = dhtConfig[ConfigKey.stabilizationInterval],
+            let stabilizationInterval = Int(stabilizationIntervalString) {
+            self.stabilizationInterval = stabilizationInterval
+        }
     }
 
     // MARK: Static Function
 
-    private static func parseInetAddress(_ inetAddr: String) -> (String, Int) {
+    private static func parseInetAddress(_ inetAddr: String) throws -> (String, Int) {
         let bracketPattern = #"\[(.*?)\]"#
         let bracketRange = inetAddr.range(of: bracketPattern, options: .regularExpression)
         if let bracketRange = bracketRange {
@@ -48,10 +114,10 @@ struct Configuration {
             // Taken from https://www.regextester.com/96774
             let ipv6Pattern = #"^(?:(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){6})(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:::(?:(?:(?:[0-9a-fA-F]{1,4})):){5})(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})))?::(?:(?:(?:[0-9a-fA-F]{1,4})):){4})(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,1}(?:(?:[0-9a-fA-F]{1,4})))?::(?:(?:(?:[0-9a-fA-F]{1,4})):){3})(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,2}(?:(?:[0-9a-fA-F]{1,4})))?::(?:(?:(?:[0-9a-fA-F]{1,4})):){2})(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,3}(?:(?:[0-9a-fA-F]{1,4})))?::(?:(?:[0-9a-fA-F]{1,4})):)(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,4}(?:(?:[0-9a-fA-F]{1,4})))?::)(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,5}(?:(?:[0-9a-fA-F]{1,4})))?::)(?:(?:[0-9a-fA-F]{1,4})))|(?:(?:(?:(?:(?:(?:[0-9a-fA-F]{1,4})):){0,6}(?:(?:[0-9a-fA-F]{1,4})))?::))))$"#
             guard ip.range(of: ipv6Pattern, options: .regularExpression) != nil else {
-                fatalError("\(ip) is not a valid IPv6 address")
+                throw ConfigurationError.invalidIPv6(ip)
             }
             guard let port = Int(String(inetAddr[bracketRange.upperBound...].filter({ $0 != ":" }))) else {
-                fatalError("Invalid port in \(inetAddr)")
+                throw ConfigurationError.invalidPort(inetAddr)
             }
             return (ip, port)
         } else {
@@ -59,16 +125,16 @@ struct Configuration {
             let ip = String(inetAddr.split(separator: ":")[0])
             let ipv4Pattern = #"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"#
             guard ip.range(of: ipv4Pattern, options: .regularExpression) != nil else {
-                fatalError("\(ip) is not a valid IPv4 address")
+                throw ConfigurationError.invalidIPv4(ip)
             }
             guard let port = Int(String(inetAddr.split(separator: ":")[1])) else {
-                fatalError("Invalid port in \(inetAddr)")
+                throw ConfigurationError.invalidPort(inetAddr)
             }
             return (ip, port)
         }
     }
 
-    private static func buildDictionary(configContents: String) -> [String: [String: String]] {
+    private static func buildDictionary(configContents: String) throws -> [String: [String: String]] {
         var dict = [String: [String: String]]()
         let lines = configContents.split(separator: "\n")
 
@@ -91,7 +157,7 @@ struct Configuration {
                 let value = String(items[1]).trimmingCharacters(in: .whitespacesAndNewlines)
                 currentSection[key] = value
                 guard let sectionName = currentSectionName else {
-                    fatalError("Invalid INI file format")
+                    throw ConfigurationError.invalidINIFileFormat
                 }
                 dict[sectionName] = currentSection
             }
