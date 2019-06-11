@@ -21,7 +21,6 @@ class DHTCommand: Command {
         guard let config = try Configuration(filePath: configPath) else {
             fatalError("Loading the config from the config file at \(configPath) failed")
         }
-        stdout <<< config.apiAddress
     }
 
     var name: String {
