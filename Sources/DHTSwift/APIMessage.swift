@@ -9,17 +9,22 @@ import Foundation
 
 // MARK: - API Message
 
-protocol APIMessage {
+/// APIMessage protocol for use with the APIServer and APIClient
+public protocol APIMessage {
     static var messageTypeID: UInt16 { get }
     var serializedBody: [UInt8] { get }
     init?(serializedBodyBytes: [UInt8])
 }
 
-extension APIMessage {
+public extension APIMessage {
+
+    /**
+     Serializes an entire APIMessage including the message header with size and message
+    **/
     func getBytes() -> [UInt8] {
         var bytes = [UInt8]()
         let messageBody = self.serializedBody
-        let messageSize = messageBody.count + 4
+        let messageSize = UInt16(messageBody.count + 4)
         let messageTypeID = Self.messageTypeID
 
         // Size
@@ -38,28 +43,24 @@ extension APIMessage {
         return bytes
     }
 
-    static func fromBytes(_ bytes: [UInt8]) -> APIMessage? {
+    /**
+     Tries to create an APIMessage object from a given byte array
+    **/
+    static func fromBytes(_ bytes: [UInt8]) -> Self? {
         let messageTypeID = bytes[2...3].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
-        let messageBody = Array(bytes[4...])
-        switch messageTypeID {
-        case DHTPut.messageTypeID:
-            return DHTPut(serializedBodyBytes: messageBody)
-        case DHTGet.messageTypeID:
-            return DHTGet(serializedBodyBytes: messageBody)
-        case DHTFailure.messageTypeID:
-            return DHTFailure(serializedBodyBytes: messageBody)
-        case DHTSuccess.messageTypeID:
-            return DHTSuccess(serializedBodyBytes: messageBody)
-        default:
+        guard messageTypeID == Self.messageTypeID else {
             return nil
         }
+
+        let messageBody = Array(bytes[4...])
+        return Self(serializedBodyBytes: messageBody)
     }
 }
 
 // MARK: - DHTPut
 
-struct DHTPut: APIMessage {
-    static let messageTypeID: UInt16 = 650
+public struct DHTPut: APIMessage, Equatable {
+    public static let messageTypeID: UInt16 = 650
 
     let ttl: UInt16
     let replication: UInt8
@@ -67,7 +68,7 @@ struct DHTPut: APIMessage {
     let key: [UInt8] // 256 Bit
     let value: [UInt8]
 
-    var serializedBody: [UInt8] {
+    public var serializedBody: [UInt8] {
         var bytes = [UInt8]()
 
         // TTL
@@ -79,7 +80,7 @@ struct DHTPut: APIMessage {
         let replicationBytes = withUnsafeBytes(of: &replicationBigEndian, { $0 })
         bytes.append(contentsOf: replicationBytes)
         // Reserved
-        var reservedBigEndian = replicationBigEndian.bigEndian
+        var reservedBigEndian = reserved.bigEndian
         let reserverBytes = withUnsafeBytes(of: &reservedBigEndian, { $0 })
         bytes.append(contentsOf: reserverBytes)
         // Key
@@ -90,7 +91,7 @@ struct DHTPut: APIMessage {
         return bytes
     }
 
-    init(ttl: UInt16, replication: UInt8, reserved: UInt8, key: [UInt8], value: [UInt8]) {
+    public init(ttl: UInt16, replication: UInt8, reserved: UInt8, key: [UInt8], value: [UInt8]) {
         self.ttl = ttl
         self.replication = replication
         self.reserved = reserved
@@ -98,44 +99,44 @@ struct DHTPut: APIMessage {
         self.value = value
     }
 
-    init?(serializedBodyBytes: [UInt8]) {
+    public init?(serializedBodyBytes: [UInt8]) {
         self.ttl = serializedBodyBytes[0...1].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         self.replication = serializedBodyBytes[2]
         self.reserved = serializedBodyBytes[3]
-        self.key = Array(serializedBodyBytes[4...36])
-        self.value = Array(serializedBodyBytes[37...])
+        self.key = Array(serializedBodyBytes[4...35])
+        self.value = Array(serializedBodyBytes[36...])
     }
 }
 
 // MARK: - DHTGet
 
-struct DHTGet: APIMessage {
-    static let messageTypeID: UInt16 = 651
+public struct DHTGet: APIMessage, Equatable {
+    public static let messageTypeID: UInt16 = 651
 
     let key: [UInt8] // 256 Bit
 
-    var serializedBody: [UInt8] {
+    public var serializedBody: [UInt8] {
         return key
     }
 
-    init(key: [UInt8]) {
+    public init(key: [UInt8]) {
         self.key = key
     }
 
-    init?(serializedBodyBytes: [UInt8]) {
+    public init?(serializedBodyBytes: [UInt8]) {
         self.key = serializedBodyBytes
     }
 }
 
 // MARK: - DHTSuccess
 
-struct DHTSuccess: APIMessage {
-    static let messageTypeID: UInt16 = 652
+public struct DHTSuccess: APIMessage, Equatable {
+    public static let messageTypeID: UInt16 = 652
 
     let key: [UInt8] // 256 Bit
     let value: [UInt8]
 
-    var serializedBody: [UInt8] {
+    public var serializedBody: [UInt8] {
         var bytes = [UInt8]()
 
         // Key
@@ -146,12 +147,12 @@ struct DHTSuccess: APIMessage {
         return bytes
     }
 
-    init(key: [UInt8], value: [UInt8]) {
+    public init(key: [UInt8], value: [UInt8]) {
         self.key = key
         self.value = value
     }
 
-    init?(serializedBodyBytes: [UInt8]) {
+    public init?(serializedBodyBytes: [UInt8]) {
         self.key = Array(serializedBodyBytes[0...31])
         self.value = Array(serializedBodyBytes[32...])
     }
@@ -159,20 +160,20 @@ struct DHTSuccess: APIMessage {
 
 // MARK: - DHTFailure
 
-struct DHTFailure: APIMessage {
-    static let messageTypeID: UInt16 = 653
+public struct DHTFailure: APIMessage, Equatable {
+    public static let messageTypeID: UInt16 = 653
 
     let key: [UInt8]
 
-    var serializedBody: [UInt8] {
+    public var serializedBody: [UInt8] {
         return key
     }
 
-    init(key: [UInt8]) {
+    public init(key: [UInt8]) {
         self.key = key
     }
 
-    init?(serializedBodyBytes: [UInt8]) {
+    public init?(serializedBodyBytes: [UInt8]) {
         self.key = serializedBodyBytes
     }
 }

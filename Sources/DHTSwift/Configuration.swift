@@ -1,6 +1,6 @@
 import Foundation
 
-enum ConfigurationError: LocalizedError {
+public enum ConfigurationError: LocalizedError {
     case missingDHTConfigSection(filePath: String)
     case missingRequiredConfigKeyValuePair(key: String)
     case invalidINIFileFormat
@@ -8,7 +8,7 @@ enum ConfigurationError: LocalizedError {
     case invalidIPv6(String)
     case invalidPort(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .missingDHTConfigSection(let filePath):
             return "The Config Section for the DHT module is missing from config file at \(filePath)"
@@ -26,7 +26,7 @@ enum ConfigurationError: LocalizedError {
     }
 }
 
-struct Configuration {
+public struct Configuration {
 
     // MARK: Private ConfigKey struct
 
@@ -43,18 +43,18 @@ struct Configuration {
 
     // MARK: Configuration Properties
 
-    var apiAddress: String
-    var apiPort: Int
-    var listenAddress: String
-    var listenPort: Int
-    var workerThreads: Int = 4
-    var timeout: Int = 300000
-    var fingers: Int = 128
-    var stabilizationInterval: Int = 60
+    public var apiAddress: String
+    public var apiPort: Int
+    public var listenAddress: String
+    public var listenPort: Int
+    public var workerThreads: Int = 4
+    public var timeout: Int = 300000
+    public var fingers: Int = 128
+    public var stabilizationInterval: Int = 60
 
     // MARK: Initializers
 
-    init?(filePath: String) throws {
+    public init?(filePath: String) throws {
         guard let configData = FileManager.default.contents(atPath: filePath),
             let configString = String(data: configData, encoding: .utf8) else {
             return nil

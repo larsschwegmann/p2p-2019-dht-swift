@@ -1,7 +1,7 @@
 import XCTest
 
-import dht_moduleTests
+import DHTSwiftTests
 
 var tests = [XCTestCaseEntry]()
-tests += dht_moduleTests.allTests()
+tests += DHTSwiftTests.allTests()
 XCTMain(tests)
