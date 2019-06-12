@@ -8,7 +8,7 @@
 import Foundation
 import NIO
 
-var dummyDict: [String: [UInt8]] = ["hello".toByteArray(cut: 32).toString(size: 32)!: [0x00, 0x01, 0x02, 0x03]]
+var dummyDict = [String: [UInt8]]()
 
 // MARK: - APIServer
 
@@ -70,7 +70,7 @@ fileprivate final class APIServerHandler: ChannelInboundHandler {
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
-        print("Client connected from \(context.remoteAddress!)")
+        print("APIServer: Client connected from \(context.remoteAddress!)")
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -89,7 +89,7 @@ fileprivate final class APIServerHandler: ChannelInboundHandler {
             }
             print("APIServer: Got DHT GET request for key \(message.key)")
             guard let value = dummyDict[key] else {
-                print("Could not find value for key \(message.key)")
+                print("APIServer: Could not find value for key \(message.key)")
                 self.sendFailure(key: message.key, context: context)
                 return
             }
@@ -104,18 +104,11 @@ fileprivate final class APIServerHandler: ChannelInboundHandler {
             // DHT PUT Request
             guard let key = message.key.toString(size: 32) else {
                 print("APIServer: Got invalid key for DHT PUT: \(message.key)")
-                self.sendFailure(key: message.key, context: context)
                 return
             }
             print("APIServer: GOT DHT PUT request for key \(message.key), value \(message.value)")
             dummyDict[key] = message.value
-
-            let success = DHTSuccess(key: message.key, value: message.value)
-            let successBytes = success.getBytes()
-            var writeBuffer = context.channel.allocator.buffer(capacity: successBytes.count)
-            writeBuffer.writeBytes(successBytes)
-            print("APIServer: Sent DHTSuccess \(success) for key \(key)")
-            context.write(wrapOutboundOut(writeBuffer), promise: nil)
+            context.close(promise: nil)
         }
     }
 
@@ -125,11 +118,11 @@ fileprivate final class APIServerHandler: ChannelInboundHandler {
     }
 
     func channelUnregistered(context: ChannelHandlerContext) {
-        print("Connection to client at \(context.remoteAddress!) closed")
+        print("APIServer: Connection to client at \(context.remoteAddress!) closed")
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("error: ", error)
+        print("APIServer: Unexpected error: ", error)
 
         // As we are not really interested getting notified on success or failure we just pass nil as promise to
         // reduce allocations.

@@ -215,6 +215,7 @@ class APIMessageTests: XCTestCase {
     func testKeySerialization() {
         let key = "hello"
         var keyBytesExpected: [UInt8] = [0x68, 0x65, 0x6c, 0x6c, 0x6f]
+        // Fill remaining bytes with zeros
         keyBytesExpected.append(contentsOf: Array(repeating: 0x0, count: 32 - keyBytesExpected.count))
         let keyBytes32 = key.toByteArray(cut: 32)
         XCTAssertEqual(keyBytesExpected, keyBytes32)
