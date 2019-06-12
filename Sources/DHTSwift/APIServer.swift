@@ -8,6 +8,8 @@
 import Foundation
 import NIO
 
+var dummyDict: [String: [UInt8]] = ["hello": [0x00, 0x01, 0x02, 0x03]]
+
 // MARK: - APIServer
 
 public struct APIServer {
@@ -26,7 +28,7 @@ public struct APIServer {
 
     // MARK: Public functions
 
-    public func start() {
+    public func start() throws {
         let group = self.eventLoopGroup
         let bootstrap = ServerBootstrap(group: group)
             // Specify backlog and enable SO_REUSEADDR for the server itself
@@ -46,6 +48,12 @@ public struct APIServer {
             .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
             .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 16)
             .childChannelOption(ChannelOptions.recvAllocator, value: AdaptiveRecvByteBufferAllocator())
+        defer {
+            try! group.syncShutdownGracefully()
+        }
+        let channel = try bootstrap.bind(host: configuration.apiAddress, port: configuration.apiPort).wait()
+        try channel.closeFuture.wait()
+
     }
 
     public func stop() {
@@ -60,7 +68,30 @@ fileprivate final class APIServerHandler: ChannelInboundHandler {
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         // As we are not really interested getting notified on success or failure we just pass nil as promise to
         // reduce allocations.
-        context.write(data, promise: nil)
+        var byteBuffer = unwrapInboundIn(data)
+        guard let bytes = byteBuffer.readBytes(length: byteBuffer.readableBytes) else {
+            return
+        }
+        if let message = DHTGet.fromBytes(bytes) {
+            guard let key = message.key.toString() else {
+                return
+            }
+            guard let value = dummyDict[key] else {
+                let failure = DHTFailure(key: message.key)
+                let failureBytes = failure.getBytes()
+                byteBuffer.writeBytes(failureBytes)
+                context.write(wrapOutboundOut(byteBuffer), promise: nil)
+                return
+            }
+
+            let success = DHTSuccess(key: message.key, value: value)
+            let successBytes = success.getBytes()
+            byteBuffer.writeBytes(successBytes)
+            context.write(wrapOutboundOut(byteBuffer), promise: nil)
+        } else if let _ = DHTPut.fromBytes(bytes) {
+            return
+        }
+        //context.write(data, promise: nil)
     }
 
     // Flush it out. This can make use of gathering writes if multiple buffers are pending
