@@ -212,8 +212,22 @@ class APIMessageTests: XCTestCase {
         XCTAssertEqual(failure!, expectedFailure)
     }
 
+    func testKeySerialization() {
+        let key = "hello"
+        var keyBytesExpected: [UInt8] = [0x68, 0x65, 0x6c, 0x6c, 0x6f]
+        keyBytesExpected.append(contentsOf: Array(repeating: 0x0, count: 32 - keyBytesExpected.count))
+        let keyBytes32 = key.toByteArray(cut: 32)
+        XCTAssertEqual(keyBytesExpected, keyBytes32)
+    }
+
     static var allTests = [
         ("putSerialization", testPutSerialization),
-        ("putDeserialization", testPutDeserialization)
+        ("putDeserialization", testPutDeserialization),
+        ("getSerialization", testGetSerialization),
+        ("getDeserialization", testGetDeserialization),
+        ("successSerialization", testSuccessSerialization),
+        ("successDeserialization", testSuccessDeserialization),
+        ("failureSerialization", testFailureSerialization),
+        ("failureDeserialization", testFailureDeserialization)
     ]
 }
