@@ -28,6 +28,7 @@ public class DHTCommand: Command {
         let multiThreadedEventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: config.workerThreads)
 
         let apiServer = APIServer(config: config, eventLoopGroup: multiThreadedEventLoopGroup)
+        try apiServer.start()
     }
 
     public var name: String {

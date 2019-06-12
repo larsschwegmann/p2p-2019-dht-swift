@@ -47,6 +47,10 @@ public extension APIMessage {
      Tries to create an APIMessage object from a given byte array
     **/
     static func fromBytes(_ bytes: [UInt8]) -> Self? {
+        guard bytes.count > 4 else {
+            // Message Header is missing
+            return nil
+        }
         let messageTypeID = bytes[2...3].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         guard messageTypeID == Self.messageTypeID else {
             return nil
@@ -100,6 +104,9 @@ public struct DHTPut: APIMessage, Equatable {
     }
 
     public init?(serializedBodyBytes: [UInt8]) {
+        guard serializedBodyBytes.count > 36 else {
+            return nil
+        }
         self.ttl = serializedBodyBytes[0...1].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         self.replication = serializedBodyBytes[2]
         self.reserved = serializedBodyBytes[3]
@@ -124,6 +131,9 @@ public struct DHTGet: APIMessage, Equatable {
     }
 
     public init?(serializedBodyBytes: [UInt8]) {
+        guard serializedBodyBytes.count == 32 else {
+            return nil
+        }
         self.key = serializedBodyBytes
     }
 }
@@ -153,6 +163,9 @@ public struct DHTSuccess: APIMessage, Equatable {
     }
 
     public init?(serializedBodyBytes: [UInt8]) {
+        guard serializedBodyBytes.count > 32 else {
+            return nil
+        }
         self.key = Array(serializedBodyBytes[0...31])
         self.value = Array(serializedBodyBytes[32...])
     }
@@ -174,6 +187,9 @@ public struct DHTFailure: APIMessage, Equatable {
     }
 
     public init?(serializedBodyBytes: [UInt8]) {
+        guard serializedBodyBytes.count == 32 else {
+            return nil
+        }
         self.key = serializedBodyBytes
     }
 }
