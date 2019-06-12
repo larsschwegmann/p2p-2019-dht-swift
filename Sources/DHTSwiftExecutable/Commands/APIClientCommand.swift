@@ -15,8 +15,6 @@ class APIClientCommand: CommandGroup {
     let name = "api"
 
     let children: [Routable] = [APIClientGetCommand(), APIClientPutCommand()]
-
-    // func execute() throws {    }
 }
 
 class APIClientGetCommand: Command {
@@ -25,11 +23,9 @@ class APIClientGetCommand: Command {
     let configKey = Key<String>("-c", "--config", description: "Path to a custom config file")
     let key = Parameter()
 
-    // let apiClient = APICLient(apiAddress: )
     func execute() throws {
         stdout <<< String(key.value)
-        // TODO
-        // Send a get request to the API server
+
         guard let configPath = configKey.value else {
             stderr <<< "Error: You need to specify a config file with -c"
             return
@@ -38,9 +34,16 @@ class APIClientGetCommand: Command {
         guard let config = try Configuration(filePath: configPath) else {
             fatalError("Loading the config from the config file at \(configPath) failed")
         }
+
         stdout <<< config.apiAddress
         let apiClient = APICLient(address: config.apiAddress, port: config.apiPort)
-        apiClient.handleGet(with: key.value)
+        let getRequestMessage = apiClient.handleGet(with: key.value)
+        do {
+            try apiClient.start(payload: getRequestMessage)
+        } catch let error {
+            print("Error: \(error.localizedDescription)")
+            apiClient.stop()
+        }
     }
 }
 
@@ -64,7 +67,14 @@ class APIClientPutCommand: Command {
             fatalError("Loading the config from the config file at \(configPath) failed")
         }
         stdout <<< config.apiAddress
+
         let apiClient = APICLient(address: config.apiAddress, port: config.apiPort)
-        apiClient.handlePut(with: key.value, value: value.value)
+        let putRequestMessage = apiClient.handlePut(with: key.value, value: value.value)
+        do {
+            try apiClient.start(payload: putRequestMessage)
+        } catch let error {
+            print("Error: \(error.localizedDescription)")
+            apiClient.stop()
+        }
     }
 }

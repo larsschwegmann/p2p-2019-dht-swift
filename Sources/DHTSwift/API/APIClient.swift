@@ -18,16 +18,25 @@ public class APICLient {
         self.port = port
     }
 
-    func start() throws {
+    public func start(payload: [UInt8]) throws {
+        let requestPayload = payload
+
+        let bootstrap = ClientBootstrap(group: group)
+            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+            .channelInitializer { channel in
+                channel.pipeline.addHandler(APIClientHandler(requestPayload: requestPayload))
+        }
+
         do {
             let channel = try bootstrap.connect(host: address, port: port).wait()
+            print("Connected to host with ip \(address) on port \(port)")
             try channel.closeFuture.wait()
         } catch let error {
             throw error
         }
     }
 
-    func stop() {
+    public func stop() {
         do {
             try group.syncShutdownGracefully()
         } catch let error {
@@ -37,63 +46,66 @@ public class APICLient {
         print("Client connection closed")
     }
 
-    private var bootstrap: ClientBootstrap {
-        return ClientBootstrap(group: group)
-            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .channelInitializer { channel in
-                channel.pipeline.addHandler(APIClientHandler())
-        }
-
-    }
-
     // MARK: - handleGet
-    public func handleGet(with key: String) {
-        var keyAsBytes : [UInt8] = []
-        guard let i = UInt8(key) else {
-            print("asdf")
-            return
-        }
-        keyAsBytes[0] = UInt8(0)
-        keyAsBytes[1] = UInt8(0)
-        keyAsBytes[2] = UInt8(0)
-        keyAsBytes[3] = i
-
-        DHTGet(key: keyAsBytes)
+    public func handleGet(with key: String) -> [UInt8] {
+        let dhtGet = DHTGet(key: key.toByteArray(cut: 32))
+        return dhtGet.getBytes()
     }
 
     // MARK: - handlePut
-    public func handlePut(with key: String, value: String) {
-
+    public func handlePut(with key: String, value: String) -> [UInt8] {
+        let dhtPut = DHTPut(ttl: 1, replication: 1, reserved: 1, key: key.toByteArray(cut: 32), value: value.toByteArray(cut: value.utf8.count))
+        return dhtPut.getBytes()
     }
 }
 
 class APIClientHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias OutboundOut = ByteBuffer
+
+    let requestPayload: [UInt8]
+
     private var numBytes = 0
 
-    // channel is connected, send a message
-    func channelActive(ctx: ChannelHandlerContext) {
-        let message = "SwiftNIO rocks!"
-        var buffer = ctx.channel.allocator.buffer(capacity: message.utf8.count)
-        buffer.writeString(message)
-        ctx.writeAndFlush(wrapOutboundOut(buffer), promise: nil)
+    init(requestPayload: [UInt8]) {
+        self.requestPayload = requestPayload
     }
 
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
+    // channel is connected, send a message
+    func channelActive(context: ChannelHandlerContext) {
+        var buffer = context.channel.allocator.buffer(capacity: requestPayload.count)
+
+        self.numBytes = buffer.readableBytes
+        context.writeAndFlush(self.wrapOutboundOut(buffer), promise: nil)
+
+        buffer.writeBytes(requestPayload)
+        context.writeAndFlush(wrapOutboundOut(buffer), promise: nil)
+        print("Send message to server")
+    }
+
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buffer = unwrapInboundIn(data)
         let readableBytes = buffer.readableBytes
-        if let received = buffer.readString(length: readableBytes) {
-            print(received)
+
+        guard let message = buffer.readBytes(length: readableBytes) else {
+            print("[Error]: Could not read bytes")
+            return
         }
+
+        if let dhtSuccess = DHTSuccess.fromBytes(message) {
+            print("[Success]: Found value \(dhtSuccess.value) for key \(dhtSuccess.key)")
+        } else if let dhtFailure = DHTFailure.fromBytes(message) {
+            print("[Error] Could not find value for key \(dhtFailure.key)")
+        }
+
         if numBytes == 0 {
             print("nothing left to read, close the channel")
-            ctx.close(promise: nil)
+            context.close(promise: nil)
         }
     }
 
-    func errorCaught(ctx: ChannelHandlerContext, error: Error) {
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("error: \(error.localizedDescription)")
-        ctx.close(promise: nil)
+        context.close(promise: nil)
     }
 }

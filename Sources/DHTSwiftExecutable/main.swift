@@ -2,5 +2,7 @@ import Foundation
 import SwiftCLI
 import DHTSwift
 
-let cli = CLI(singleCommand: DHTCommand())
+let cli = CLI(name: "api")
+cli.commands = [APIClientCommand()]
+
 cli.goAndExit()
