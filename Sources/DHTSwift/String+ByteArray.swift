@@ -21,7 +21,7 @@ extension String {
             return bytes
         } else if self.utf8.count < cut {
             var bytes = Array(self.utf8)
-            (0...(cut - self.utf8.count)).forEach { _ in
+            (0...(cut - self.utf8.count - 1)).forEach { _ in
                 bytes.append(0x00)
             }
             return bytes
