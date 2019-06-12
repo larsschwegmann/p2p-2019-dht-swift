@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "CryptoSwift",
+        "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
+        "state": {
+          "branch": null,
+          "revision": "3a2acbb32ab68215ee1596ee6004da8e90c3721b",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "swift-nio",
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
@@ -25,6 +34,15 @@
         "state": {
           "branch": "master",
           "revision": "3888ffd3ad237c6c6d73df92ef42258af4a90f60",
+          "version": null
+        }
+      },
+      {
+        "package": "UInt256",
+        "repositoryURL": "https://github.com/larsschwegmann/UInt256.git",
+        "state": {
+          "branch": "master",
+          "revision": "3bb1a6d2fa4c55ee90d92f0a2faf494ca2deec45",
           "version": null
         }
       }
