@@ -80,12 +80,16 @@ struct P2PStorageFailure: NetworkMessage, Equatable {
 // MARK: P2PPeerFind
 
 struct P2PPeerFind: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16
+    static let messageTypeID: UInt16 = 1050
 
-    var serializedBody: [UInt8]
+    let key: [UInt8] // 256 Bit
+
+    var serializedBody: [UInt8] {
+        return self.key
+    }
 
     init?(serializedBodyBytes: [UInt8]) {
-        <#code#>
+        self.key = serializedBodyBytes
     }
 
 
@@ -94,12 +98,32 @@ struct P2PPeerFind: NetworkMessage, Equatable {
 // MARK: P2PPeerFound
 
 struct P2PPeerFound: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16
+    static let messageTypeID: UInt16 = 1051
 
-    var serializedBody: [UInt8]
+    let key: [UInt8]    // 256 Bit
+    let ipAddr: [UInt8] // 128 Bit IPv6 Addr
+    let port: UInt16
+
+    var serializedBody: [UInt8] {
+        var bytes = [UInt8]()
+        // Key
+        bytes.append(contentsOf: key)
+        // IP Address
+        bytes.append(contentsOf: ipAddr)
+        // Port
+        var portBigEndian = port.bigEndian
+        let portBytes = withUnsafeBytes(of: &portBigEndian, { $0 })
+        bytes.append(contentsOf: portBytes)
+        return bytes
+    }
 
     init?(serializedBodyBytes: [UInt8]) {
-        <#code#>
+        guard serializedBodyBytes.count == 50 else {
+            return nil
+        }
+        self.key = Array(serializedBodyBytes[0...31])
+        self.ipAddr = Array(serializedBodyBytes[32...47])
+        self.port = serializedBodyBytes[48...].withUnsafeBytes({ $0.load(as: UInt16.self) })
     }
 
 
@@ -108,12 +132,28 @@ struct P2PPeerFound: NetworkMessage, Equatable {
 // MARK: P2PPredecessorNotify
 
 struct P2PPredecessorNotify: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16
+    static let messageTypeID: UInt16 = 1052
 
-    var serializedBody: [UInt8]
+    let ipAddr: [UInt8] // 128 Bit IPv6 Address
+    let port: UInt16
+
+    var serializedBody: [UInt8] {
+        var bytes = [UInt8]()
+        // IP Address
+        bytes.append(contentsOf: ipAddr)
+        // Port
+        var portBigEndian = port.bigEndian
+        let portBytes = withUnsafeBytes(of: &portBigEndian, { $0 })
+        bytes.append(contentsOf: portBytes)
+        return bytes
+    }
 
     init?(serializedBodyBytes: [UInt8]) {
-        <#code#>
+        guard serializedBodyBytes.count == 18 else {
+            return nil
+        }
+        self.ipAddr = Array(serializedBodyBytes[0...15])
+        self.port = serializedBodyBytes[16...].withUnsafeBytes({ $0.load(as: UInt16.self) })
     }
 
 
@@ -122,13 +162,27 @@ struct P2PPredecessorNotify: NetworkMessage, Equatable {
 // MARK: P2PPRedecessorReply
 
 struct P2PPredecessorReply: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16
-    
-    var serializedBody: [UInt8]
-    
-    init?(serializedBodyBytes: [UInt8]) {
-        <#code#>
-    }
-    
+    static let messageTypeID: UInt16 = 1053
 
+    let ipAddr: [UInt8] // 128 Bit IPv6 Address
+    let port: UInt16
+
+    var serializedBody: [UInt8] {
+        var bytes = [UInt8]()
+        // IP Address
+        bytes.append(contentsOf: ipAddr)
+        // Port
+        var portBigEndian = port.bigEndian
+        let portBytes = withUnsafeBytes(of: &portBigEndian, { $0 })
+        bytes.append(contentsOf: portBytes)
+        return bytes
+    }
+
+    init?(serializedBodyBytes: [UInt8]) {
+        guard serializedBodyBytes.count == 18 else {
+            return nil
+        }
+        self.ipAddr = Array(serializedBodyBytes[0...15])
+        self.port = serializedBodyBytes[16...].withUnsafeBytes({ $0.load(as: UInt16.self) })
+    }
 }
