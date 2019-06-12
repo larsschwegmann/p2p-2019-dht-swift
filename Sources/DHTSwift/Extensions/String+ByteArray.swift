@@ -29,6 +29,19 @@ extension String {
         }
         return Array(self.utf8)
     }
+
+    func split(by length: Int) -> [String] {
+        var startIndex = self.startIndex
+        var results = [Substring]()
+
+        while startIndex < self.endIndex {
+            let endIndex = self.index(startIndex, offsetBy: length, limitedBy: self.endIndex) ?? self.endIndex
+            results.append(self[startIndex..<endIndex])
+            startIndex = endIndex
+        }
+
+        return results.map { String($0) }
+    }
 }
 
 extension Array where Element == UInt8 {
@@ -37,5 +50,27 @@ extension Array where Element == UInt8 {
             return nil
         }
         return String(bytes: self, encoding: .utf8)
+    }
+
+    init?(ipv4String: String) {
+        let components = ipv4String.split(separator: ".")
+        guard components.count == 4 else {
+            return nil
+        }
+        let ipv4 = components.compactMap({ return UInt8($0) })
+        var bytes = Array<UInt8>(repeating: 0x00, count: 10)
+        bytes.append(contentsOf: Array<UInt8>(repeating: 0xff, count: 2))
+        bytes.append(contentsOf: ipv4)
+        self.init(bytes)
+    }
+
+    /// Note: This onlony works with fully written out IPv6 adressess, not with something like ::1
+    init?(ipv6String: String) {
+        let sanitized = ipv6String.split(separator: ":").joined()
+        guard sanitized.count == 32 else {
+            return nil
+        }
+        let ipv6 = sanitized.split(by: 2).compactMap({ UInt8(String($0), radix: 16) })
+        self.init(ipv6)
     }
 }

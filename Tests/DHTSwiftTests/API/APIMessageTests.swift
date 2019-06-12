@@ -11,224 +11,71 @@ import Foundation
 
 class APIMessageTests: XCTestCase {
 
-    // MARK: Comparison objects
-
-    let dhtPutObject = DHTPut(ttl: 0xFF,
-                                 replication: 0x00,
-                                 reserved: 0xab,
-                                 key:
-        [
-            0x01, 0x02, 0x03, 0x04,
-            0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0a, 0x0b, 0x0c,
-            0x0d, 0x0e, 0x0f, 0x10,
-            0x11, 0x12, 0x13, 0x14,
-            0x15, 0x16, 0x17, 0x18,
-            0x19, 0x1a, 0x1b, 0x1c,
-            0x1d, 0x1e, 0x1f, 0x20
-        ],
-                                 value:
-        [
-            0x01, 0x02, 0x03, 0x04,
-            0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0a, 0x0b, 0x0c,
-            0x0d, 0x0e, 0x0f, 0x10,
-            0x11, 0x12, 0x13, 0x14,
-            0x15, 0x16, 0x17, 0x18,
-            0x19, 0x1a, 0x1b, 0x1c,
-            0x1d, 0x1e, 0x1f, 0x20
-        ])
-    let dhtPutBytes: [UInt8] = [
-        0x00, 0x48, // Size == 72
-        0x02, 0x8a, // Message Type ID == 650
-        0x00, 0xFF, // TTL
-        0x00,       // Replication == 0
-        0xab,       // Reserved = 0xab
-        0x01, 0x02, 0x03, 0x04, // Key
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20,
-        0x01, 0x02, 0x03, 0x04, // Value
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-    ]
-
-    let dhtGetObject = DHTGet(key: [
-        0x01, 0x02, 0x03, 0x04,
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-        ])
-    let dhtGetBytes: [UInt8] = [
-        0x00, 0x24, // Size = 34
-        0x02, 0x8b,  // Message Type Id = 651
-        0x01, 0x02, 0x03, 0x04, // Key
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-    ]
-
-    let dhtSuccessObject = DHTSuccess(key:
-        [
-            0x01, 0x02, 0x03, 0x04,
-            0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0a, 0x0b, 0x0c,
-            0x0d, 0x0e, 0x0f, 0x10,
-            0x11, 0x12, 0x13, 0x14,
-            0x15, 0x16, 0x17, 0x18,
-            0x19, 0x1a, 0x1b, 0x1c,
-            0x1d, 0x1e, 0x1f, 0x20
-        ], value:
-        [
-            0x01, 0x02, 0x03, 0x04,
-            0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0a, 0x0b, 0x0c,
-            0x0d, 0x0e, 0x0f, 0x10,
-            0x11, 0x12, 0x13, 0x14,
-            0x15, 0x16, 0x17, 0x18,
-            0x19, 0x1a, 0x1b, 0x1c,
-            0x1d, 0x1e, 0x1f, 0x20
-        ])
-    let dhtSuccessBytes: [UInt8] = [
-        0x00, 0x44, // Size = 68
-        0x02, 0x8c,  // Message Type Id = 652
-        0x01, 0x02, 0x03, 0x04, // Key
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20,
-        0x01, 0x02, 0x03, 0x04, // Value
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-    ]
-
-    let dhtFailureObject = DHTFailure(key: [
-        0x01, 0x02, 0x03, 0x04,
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-        ])
-    let dhtFailureBytes: [UInt8] = [
-        0x00, 0x24, // Size = 34
-        0x02, 0x8d,  // Message Type Id = 653
-        0x01, 0x02, 0x03, 0x04, // Key
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, 0x1e, 0x1f, 0x20
-    ]
-
-    // MARK: Tests
-
-    func testPutSerialization() {
-        let put = dhtPutObject
-        let bytes = put.getBytes()
-        let expectedBytes: [UInt8] = dhtPutBytes
-        XCTAssertEqual(bytes, expectedBytes)
+    func testAPIDHTPut() {
+        let buf: [UInt8] = [
+            // Header
+            0, 45, 0x02, 0x8a,
+            // TTL, replication and reserved
+            0, 12, 4, 0,
+            // 32 bytes for key
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            // value
+            1, 2, 3, 4, 5,
+        ]
+        let msg = DHTPut(ttl: 12,
+                         replication: 4,
+                         key: Array<UInt8>(repeating: 3, count: 32),
+                         value: [1, 2, 3, 4, 5])
+        XCTAssertEqual(buf, msg.getBytes())
+        XCTAssertEqual(DHTPut.fromBytes(buf), msg)
     }
 
-    func testPutDeserialization() {
-        let bytes: [UInt8] =  dhtPutBytes
-        let put = DHTPut.fromBytes(bytes)
-        XCTAssertNotNil(put)
-        let expectedPut = dhtPutObject
-        XCTAssertEqual(put!, expectedPut)
+    func testAPIDHTGet() {
+        let buf: [UInt8] = [
+            // Header
+            0, 36, 0x02, 0x8b,
+            // 32 bytes for key
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+        ]
+        let msg = DHTGet(key: Array<UInt8>(repeating: 3, count: 32))
+        XCTAssertEqual(buf, msg.getBytes())
+        XCTAssertEqual(DHTGet.fromBytes(buf), msg)
     }
 
-    func testGetSerialization() {
-        let get = dhtGetObject
-        let bytes = get.getBytes()
-        let expectedBytes: [UInt8] = dhtGetBytes
-        XCTAssertEqual(bytes, expectedBytes)
+    func testAPIDHTSuccess() {
+        let buf: [UInt8] = [
+            // Header
+            0, 41, 0x02, 0x8c,
+            // 32 bytes for key
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            // value
+            1, 2, 3, 4, 5
+        ]
+        let msg = DHTSuccess(key: Array<UInt8>(repeating: 3, count: 32), value: [1, 2, 3, 4, 5])
+        XCTAssertEqual(buf, msg.getBytes())
+        XCTAssertEqual(DHTSuccess.fromBytes(buf), msg)
     }
 
-    func testGetDeserialization() {
-        let bytes: [UInt8] =  dhtGetBytes
-        let get = DHTGet.fromBytes(bytes)
-        XCTAssertNotNil(get)
-        let expectedGet = dhtGetObject
-        XCTAssertEqual(get!, expectedGet)
-    }
-
-    func testSuccessSerialization() {
-        let success = dhtSuccessObject
-        let bytes = success.getBytes()
-        let expectedBytes: [UInt8] = dhtSuccessBytes
-        XCTAssertEqual(bytes, expectedBytes)
-    }
-
-    func testSuccessDeserialization() {
-        let bytes: [UInt8] =  dhtSuccessBytes
-        let success = DHTSuccess.fromBytes(bytes)
-        XCTAssertNotNil(success)
-        let expectedSuccess = dhtSuccessObject
-        XCTAssertEqual(success!, expectedSuccess)
-    }
-
-    func testFailureSerialization() {
-        let failure = dhtFailureObject
-        let bytes = failure.getBytes()
-        let expectedBytes: [UInt8] = dhtFailureBytes
-        XCTAssertEqual(bytes, expectedBytes)
-    }
-
-    func testFailureDeserialization() {
-        let bytes: [UInt8] =  dhtFailureBytes
-        let failure = DHTFailure.fromBytes(bytes)
-        XCTAssertNotNil(failure)
-        let expectedFailure = dhtFailureObject
-        XCTAssertEqual(failure!, expectedFailure)
-    }
-
-    func testKeySerialization() {
-        let key = "hello"
-        var keyBytesExpected: [UInt8] = [0x68, 0x65, 0x6c, 0x6c, 0x6f]
-        // Fill remaining bytes with zeros
-        keyBytesExpected.append(contentsOf: Array(repeating: 0x0, count: 32 - keyBytesExpected.count))
-        let keyBytes32 = key.toByteArray(cut: 32)
-        XCTAssertEqual(keyBytesExpected, keyBytes32)
+    func testAPIDHTFailure() {
+        let buf: [UInt8] = [
+            // Header
+            0, 36, 0x02, 0x8d,
+            // 32 bytes for key
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+        ]
+        let msg = DHTFailure(key: Array<UInt8>(repeating: 3, count: 32))
+        XCTAssertEqual(buf, msg.getBytes())
+        XCTAssertEqual(DHTFailure.fromBytes(buf), msg)
     }
 
     static var allTests = [
-        ("putSerialization", testPutSerialization),
-        ("putDeserialization", testPutDeserialization),
-        ("getSerialization", testGetSerialization),
-        ("getDeserialization", testGetDeserialization),
-        ("successSerialization", testSuccessSerialization),
-        ("successDeserialization", testSuccessDeserialization),
-        ("failureSerialization", testFailureSerialization),
-        ("failureDeserialization", testFailureDeserialization)
+        ("testAPIDHTPut", testAPIDHTPut),
+        ("testAPIDHTGet", testAPIDHTGet),
+        ("testAPIDHTSuccess", testAPIDHTSuccess),
+        ("testAPIDHTFailure", testAPIDHTFailure)
     ]
 }

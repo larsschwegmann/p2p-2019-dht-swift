@@ -14,7 +14,6 @@ public struct DHTPut: NetworkMessage, Equatable {
 
     let ttl: UInt16
     let replication: UInt8
-    let reserved: UInt8
     let key: [UInt8] // 256 Bit
     let value: [UInt8]
 
@@ -30,9 +29,7 @@ public struct DHTPut: NetworkMessage, Equatable {
         let replicationBytes = withUnsafeBytes(of: &replicationBigEndian, { $0 })
         bytes.append(contentsOf: replicationBytes)
         // Reserved
-        var reservedBigEndian = reserved.bigEndian
-        let reserverBytes = withUnsafeBytes(of: &reservedBigEndian, { $0 })
-        bytes.append(contentsOf: reserverBytes)
+        bytes.append(0x00)
         // Key
         bytes.append(contentsOf: key)
         // Value
@@ -41,10 +38,9 @@ public struct DHTPut: NetworkMessage, Equatable {
         return bytes
     }
 
-    public init(ttl: UInt16, replication: UInt8, reserved: UInt8, key: [UInt8], value: [UInt8]) {
+    public init(ttl: UInt16, replication: UInt8, key: [UInt8], value: [UInt8]) {
         self.ttl = ttl
         self.replication = replication
-        self.reserved = reserved
         self.key = key
         self.value = value
     }
@@ -55,7 +51,6 @@ public struct DHTPut: NetworkMessage, Equatable {
         }
         self.ttl = serializedBodyBytes[0...1].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         self.replication = serializedBodyBytes[2]
-        self.reserved = serializedBodyBytes[3]
         self.key = Array(serializedBodyBytes[4...35])
         self.value = Array(serializedBodyBytes[36...])
     }
