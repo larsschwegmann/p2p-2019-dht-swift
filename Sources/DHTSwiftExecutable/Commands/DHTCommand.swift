@@ -28,4 +28,6 @@ public class DHTCommand: Command {
         return "dht-module"
     }
 
+    public let shortDescription: String = "Runs the DHT Module component of the voidphone project"
+
 }

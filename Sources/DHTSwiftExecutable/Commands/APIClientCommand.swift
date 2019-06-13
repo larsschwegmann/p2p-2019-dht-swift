@@ -5,7 +5,7 @@ import DHTSwift
 class APIClientCommand: CommandGroup {
 
     var shortDescription: String = "Send a GET or PUT request to the DHT API server"
-    let name = "api"
+    let name = "api-client"
 
     let children: [Routable] = [APIClientGetCommand(), APIClientPutCommand()]
 }

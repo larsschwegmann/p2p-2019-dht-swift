@@ -11,7 +11,7 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
             return .needMoreData
         }
 
-        let size = sizeBytes.withUnsafeBytes({ $0.load(as: UInt16.self) })
+        let size = sizeBytes.withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         guard buffer.readableBytes >= size else {
             // We can't read the whole message yet
             return .needMoreData
@@ -22,13 +22,13 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
             return .needMoreData
         }
 
-        let messageTypeIDRaw = structBytes[2...3].withUnsafeBytes({ $0.load(as: UInt16.self) })
+        let messageTypeIDRaw = structBytes[2...3].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         guard let messageTypeID = NetworkMessageTypeID.init(rawValue: messageTypeIDRaw) else {
             // Error or unknown message type id
             return .continue
         }
 
-        var networkMessage: NetworkMessage? = messageTypeID.getType().fromBytes(structBytes)
+        let networkMessage: NetworkMessage? = messageTypeID.getType().fromBytes(structBytes)
 
         if networkMessage != nil {
             context.fireChannelRead(wrapInboundOut(networkMessage!))
