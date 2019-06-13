@@ -1,10 +1,3 @@
-//
-//  APIMessageTests.swift
-//  DHTSwiftTests
-//
-//  Created by Lars Schwegmann on 11.06.19.
-//
-
 import XCTest
 import Foundation
 @testable import DHTSwift

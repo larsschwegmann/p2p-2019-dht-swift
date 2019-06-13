@@ -1,10 +1,3 @@
-//
-//  Collection+SafeSubscript.swift
-//  dht-module
-//
-//  Created by Lars Schwegmann on 11.06.19.
-//
-
 import Foundation
 
 extension Collection {

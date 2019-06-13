@@ -1,10 +1,3 @@
-//
-//  APIClientCommand.swift
-//  dht-module
-//
-//  Created by Dimitri Tyan on 11.06.19.
-//
-
 import Foundation
 import SwiftCLI
 import DHTSwift

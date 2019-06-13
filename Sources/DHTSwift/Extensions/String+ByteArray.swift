@@ -1,10 +1,3 @@
-//
-//  String+ByteArray.swift
-//  DHTSwiftExecutable
-//
-//  Created by Lars Schwegmann on 12.06.19.
-//
-
 import Foundation
 
 extension String {
@@ -45,13 +38,6 @@ extension String {
 }
 
 extension Array where Element == UInt8 {
-    func toString(size: Int) -> String? {
-        guard self.count == size else {
-            return nil
-        }
-        return String(bytes: self, encoding: .utf8)
-    }
-
     init?(ipv4String: String) {
         let components = ipv4String.split(separator: ".")
         guard components.count == 4 else {
@@ -64,7 +50,7 @@ extension Array where Element == UInt8 {
         self.init(bytes)
     }
 
-    /// Note: This onlony works with fully written out IPv6 adressess, not with something like ::1
+    /// Note: This only works with fully written out IPv6 adressess, not with something like ::1
     init?(ipv6String: String) {
         let sanitized = ipv6String.split(separator: ":").joined()
         guard sanitized.count == 32 else {

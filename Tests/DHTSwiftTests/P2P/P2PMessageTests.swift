@@ -1,10 +1,3 @@
-//
-//  P2PMessageTests.swift
-//  DHTSwiftTests
-//
-//  Created by Lars Schwegmann on 12.06.19.
-//
-
 import XCTest
 import Foundation
 @testable import DHTSwift

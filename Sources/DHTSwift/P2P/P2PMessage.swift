@@ -1,16 +1,9 @@
-//
-//  P2PMessage.swift
-//  DHTSwift
-//
-//  Created by Lars Schwegmann on 12.06.19.
-//
-
 import Foundation
 
 // MARK: P2PStorageGet
 
 struct P2PStorageGet: NetworkMessage, Equatable {
-    static let messageTypeID: UInt16 = 1000
+    static let messageTypeID: NetworkMessageTypeID = .P2PStorageGetID
 
     let replicationIndex: UInt8
     let key: [UInt8] // 256 Bit
@@ -47,7 +40,7 @@ struct P2PStorageGet: NetworkMessage, Equatable {
 // MARK: P2PStoragePut
 
 struct P2PStoragePut: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16 = 1001
+    static var messageTypeID: NetworkMessageTypeID = .P2PStoragePutID
 
     let ttl: UInt16
     let replicationIndex: UInt8
@@ -98,7 +91,7 @@ struct P2PStoragePut: NetworkMessage, Equatable {
 // MARK: P2PStorageGetSuccess
 
 struct P2PStorageGetSuccess: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16 = 1002
+    static var messageTypeID: NetworkMessageTypeID = .P2PStorageGetSuccessID
 
     let key: [UInt8]
     let value: [UInt8]
@@ -131,7 +124,7 @@ struct P2PStorageGetSuccess: NetworkMessage, Equatable {
 // MARK: P2PStoragePutSuccess
 
 struct P2PStoragePutSuccess: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16 = 1003
+    static var messageTypeID: NetworkMessageTypeID = .P2PStoragePutSuccessID
 
     let key: [UInt8]
 
@@ -154,7 +147,7 @@ struct P2PStoragePutSuccess: NetworkMessage, Equatable {
 // MARK: P2PStorageFailure
 
 struct P2PStorageFailure: NetworkMessage, Equatable {
-    static var messageTypeID: UInt16 = 1004
+    static var messageTypeID: NetworkMessageTypeID = .P2PStorageFailureID
 
     let key: [UInt8]
 
@@ -178,7 +171,7 @@ struct P2PStorageFailure: NetworkMessage, Equatable {
 // MARK: P2PPeerFind
 
 struct P2PPeerFind: NetworkMessage, Equatable {
-    static let messageTypeID: UInt16 = 1050
+    static let messageTypeID: NetworkMessageTypeID = .P2PPeerFindID
 
     let key: [UInt8] // 256 Bit
 
@@ -200,7 +193,7 @@ struct P2PPeerFind: NetworkMessage, Equatable {
 // MARK: P2PPeerFound
 
 struct P2PPeerFound: NetworkMessage, Equatable {
-    static let messageTypeID: UInt16 = 1051
+    static let messageTypeID: NetworkMessageTypeID = .P2PPeerFoundID
 
     let key: [UInt8]    // 256 Bit
     let ipAddr: [UInt8] // 128 Bit IPv6 Addr
@@ -240,7 +233,7 @@ struct P2PPeerFound: NetworkMessage, Equatable {
 // MARK: P2PPredecessorNotify
 
 struct P2PPredecessorNotify: NetworkMessage, Equatable {
-    static let messageTypeID: UInt16 = 1052
+    static let messageTypeID: NetworkMessageTypeID = .P2PPredecessorNotifyID
 
     let ipAddr: [UInt8] // 128 Bit IPv6 Address
     let port: UInt16
@@ -275,7 +268,7 @@ struct P2PPredecessorNotify: NetworkMessage, Equatable {
 // MARK: P2PPRedecessorReply
 
 struct P2PPredecessorReply: NetworkMessage, Equatable {
-    static let messageTypeID: UInt16 = 1053
+    static let messageTypeID: NetworkMessageTypeID = .P2PPredecessorReplyID
 
     let ipAddr: [UInt8] // 128 Bit IPv6 Address
     let port: UInt16
