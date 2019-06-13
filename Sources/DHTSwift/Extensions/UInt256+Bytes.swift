@@ -2,10 +2,7 @@ import UInt256
 import Foundation
 
 extension UInt256 {
-
-    /**
-     Given a 32 byte Array, constructs a UInt256
-    **/
+    /// Given a 32 byte Array, constructs a UInt256
     init(bytes: [UInt8]) {
         var words = [UInt64]()
         for i in 0..<(bytes.count / 8) {
@@ -16,9 +13,7 @@ extension UInt256 {
         self.init(words)
     }
 
-    /**
-     Returns a byte array of the instance
-    **/
+    /// Returns a byte array of the instance
     func getBytes() -> [UInt8] {
         let words = self.words
         var bytes = [UInt8]()
@@ -29,5 +24,4 @@ extension UInt256 {
         }
         return bytes
     }
-
 }

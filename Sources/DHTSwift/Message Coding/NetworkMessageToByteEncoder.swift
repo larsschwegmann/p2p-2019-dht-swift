@@ -1,6 +1,7 @@
 import Foundation
 import NIO
 
+/// Encodes a NetworkMessage into a ByteBuffer
 struct NetworkMessageToByteEncoder: MessageToByteEncoder {
     typealias OutboundIn = NetworkMessage
 

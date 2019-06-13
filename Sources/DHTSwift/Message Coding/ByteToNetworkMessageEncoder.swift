@@ -1,6 +1,7 @@
 import Foundation
 import NIO
 
+/// Decodes a ByteBuffer to a NetworkMessage object
 public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
     public typealias InboundOut = NetworkMessage
 

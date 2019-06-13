@@ -2,6 +2,11 @@ import Foundation
 
 // MARK: - NetworkMessageTypeID
 
+/**
+ Enumeration of all Message Type IDs handled by the module.
+ Cases prefixed with 'DHT' correspond to the API Interface of the module.
+ Case prefixed with 'P2P' correspond to the inter-module interface or PeerToPeer interface of the module
+ */
 public enum NetworkMessageTypeID: UInt16 {
     case DHTPutID                   = 650
     case DHTGetID                   = 651
@@ -60,9 +65,7 @@ public protocol NetworkMessage {
 
 public extension NetworkMessage {
 
-    /**
-     Serializes an entire APIMessage including the message header with size and message
-     **/
+    /// Serializes an entire NetworkMessage to a byte array including the message header with size and message
     func getBytes() -> [UInt8] {
         var bytes = [UInt8]()
         let messageBody = self.serializedBody
@@ -85,9 +88,7 @@ public extension NetworkMessage {
         return bytes
     }
 
-    /**
-     Tries to create an APIMessage object from a given byte array
-     **/
+    /// Tries to create an APIMessage object from a given byte array
     static func fromBytes(_ bytes: [UInt8]) -> Self? {
         guard bytes.count > 4 else {
             // Message Header is missing

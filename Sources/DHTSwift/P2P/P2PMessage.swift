@@ -1,12 +1,13 @@
 import Foundation
+import UInt256
 
-// MARK: P2PStorageGet
+// MARK: - P2PStorageGet
 
 struct P2PStorageGet: NetworkMessage, Equatable {
     static let messageTypeID: NetworkMessageTypeID = .P2PStorageGetID
 
     let replicationIndex: UInt8
-    let key: [UInt8] // 256 Bit
+    let key: UInt256
 
     var serializedBody: [UInt8] {
         var bytes = [UInt8]()
@@ -18,14 +19,19 @@ struct P2PStorageGet: NetworkMessage, Equatable {
         // Reserved
         bytes.append(contentsOf: Array<UInt8>(repeating: 0x00, count: 3))
         // RawKey
-        bytes.append(contentsOf: key)
+        bytes.append(contentsOf: key.getBytes())
 
         return bytes
     }
 
-    public init(replicationIndex: UInt8, key: [UInt8]) {
+    public init(replicationIndex: UInt8, key: UInt256) {
         self.replicationIndex = replicationIndex
         self.key = key
+    }
+
+    public init(replicationIndex: UInt8, key: [UInt8]) {
+        self.replicationIndex = replicationIndex
+        self.key = UInt256(bytes: key)
     }
 
     init?(serializedBodyBytes: [UInt8]) {
@@ -33,18 +39,18 @@ struct P2PStorageGet: NetworkMessage, Equatable {
             return nil
         }
         self.replicationIndex = serializedBodyBytes[0]
-        self.key = Array(serializedBodyBytes[4...35])
+        self.key = UInt256(bytes: Array(serializedBodyBytes[4...35]))
     }
 }
 
-// MARK: P2PStoragePut
+// MARK: - P2PStoragePut
 
 struct P2PStoragePut: NetworkMessage, Equatable {
     static var messageTypeID: NetworkMessageTypeID = .P2PStoragePutID
 
     let ttl: UInt16
     let replicationIndex: UInt8
-    let key: [UInt8] // 256 Bit
+    let key: UInt256
     let value: [UInt8]
 
     var serializedBody: [UInt8] {
@@ -63,17 +69,24 @@ struct P2PStoragePut: NetworkMessage, Equatable {
         // Reserved
         bytes.append(0x00)
         // RawKey
-        bytes.append(contentsOf: key)
+        bytes.append(contentsOf: key.getBytes())
         // Value
         bytes.append(contentsOf: value)
 
         return bytes
     }
 
-    public init(ttl: UInt16, replicationIndex: UInt8, key: [UInt8], value: [UInt8]) {
+    public init(ttl: UInt16, replicationIndex: UInt8, key: UInt256, value: [UInt8]) {
         self.ttl = ttl
         self.replicationIndex = replicationIndex
         self.key = key
+        self.value = value
+    }
+
+    public init(ttl: UInt16, replicationIndex: UInt8, key: [UInt8], value: [UInt8]) {
+        self.ttl = ttl
+        self.replicationIndex = replicationIndex
+        self.key = UInt256(bytes: key)
         self.value = value
     }
 
@@ -83,32 +96,37 @@ struct P2PStoragePut: NetworkMessage, Equatable {
         }
         self.ttl = serializedBodyBytes[0...1].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
         self.replicationIndex = serializedBodyBytes[2]
-        self.key = Array(serializedBodyBytes[4...35])
+        self.key = UInt256(bytes: Array(serializedBodyBytes[4...35]))
         self.value = Array(serializedBodyBytes[36...])
     }
 }
 
-// MARK: P2PStorageGetSuccess
+// MARK: - P2PStorageGetSuccess
 
 struct P2PStorageGetSuccess: NetworkMessage, Equatable {
     static var messageTypeID: NetworkMessageTypeID = .P2PStorageGetSuccessID
 
-    let key: [UInt8]
+    let key: UInt256
     let value: [UInt8]
 
     var serializedBody: [UInt8] {
         var bytes = [UInt8]()
 
         // Key
-        bytes.append(contentsOf: key)
+        bytes.append(contentsOf: key.getBytes())
         // Value
         bytes.append(contentsOf: value)
 
         return bytes
     }
 
-    public init(key: [UInt8], value: [UInt8]) {
+    public init(key: UInt256, value: [UInt8]) {
         self.key = key
+        self.value = value
+    }
+
+    public init(key: [UInt8], value: [UInt8]) {
+        self.key = UInt256(bytes: key)
         self.value = value
     }
 
@@ -116,93 +134,103 @@ struct P2PStorageGetSuccess: NetworkMessage, Equatable {
         guard serializedBodyBytes.count > 32 else {
             return nil
         }
-        self.key = Array(serializedBodyBytes[0...31])
+        self.key = UInt256(bytes: Array(serializedBodyBytes[0...31]))
         self.value = Array(serializedBodyBytes[32...])
     }
 }
 
-// MARK: P2PStoragePutSuccess
+// MARK: - P2PStoragePutSuccess
 
 struct P2PStoragePutSuccess: NetworkMessage, Equatable {
     static var messageTypeID: NetworkMessageTypeID = .P2PStoragePutSuccessID
 
-    let key: [UInt8]
+    let key: UInt256
 
     var serializedBody: [UInt8] {
-        return key
+        return key.getBytes()
+    }
+
+    public init(key: UInt256) {
+        self.key = key
     }
 
     public init(key: [UInt8]) {
-        self.key = key
+        self.key = UInt256(bytes: key)
     }
 
     init?(serializedBodyBytes: [UInt8]) {
         guard serializedBodyBytes.count == 32 else {
             return nil
         }
-        self.key = serializedBodyBytes
+        self.key = UInt256(bytes: serializedBodyBytes)
     }
 }
 
-// MARK: P2PStorageFailure
+// MARK: - P2PStorageFailure
 
 struct P2PStorageFailure: NetworkMessage, Equatable {
     static var messageTypeID: NetworkMessageTypeID = .P2PStorageFailureID
 
-    let key: [UInt8]
+    let key: UInt256
 
     var serializedBody: [UInt8] {
-        return key
+        return key.getBytes()
+    }
+
+    public init(key: UInt256) {
+        self.key = key
     }
 
     public init(key: [UInt8]) {
-        self.key = key
+        self.key = UInt256(bytes: key)
     }
 
     init?(serializedBodyBytes: [UInt8]) {
         guard serializedBodyBytes.count == 32 else {
             return nil
         }
-        self.key = serializedBodyBytes
+        self.key = UInt256(bytes: serializedBodyBytes)
     }
 
 }
 
-// MARK: P2PPeerFind
+// MARK: - P2PPeerFind
 
 struct P2PPeerFind: NetworkMessage, Equatable {
     static let messageTypeID: NetworkMessageTypeID = .P2PPeerFindID
 
-    let key: [UInt8] // 256 Bit
+    let key: UInt256
 
     var serializedBody: [UInt8] {
-        return self.key
+        return self.key.getBytes()
     }
 
-    public init(key: [UInt8]) {
+    public init(key: UInt256) {
         self.key = key
     }
 
-    init?(serializedBodyBytes: [UInt8]) {
-        self.key = serializedBodyBytes
+    public init(key: [UInt8]) {
+        self.key = UInt256(bytes: key)
     }
 
-
+    init?(serializedBodyBytes: [UInt8]) {
+        self.key = UInt256(bytes: serializedBodyBytes)
+    }
 }
 
-// MARK: P2PPeerFound
+// MARK: - P2PPeerFound
 
 struct P2PPeerFound: NetworkMessage, Equatable {
     static let messageTypeID: NetworkMessageTypeID = .P2PPeerFoundID
 
-    let key: [UInt8]    // 256 Bit
+    let key: UInt256
     let ipAddr: [UInt8] // 128 Bit IPv6 Addr
     let port: UInt16
 
     var serializedBody: [UInt8] {
         var bytes = [UInt8]()
         // Key
-        bytes.append(contentsOf: key)
+        bytes.append(contentsOf: key.getBytes())
         // IP Address
         bytes.append(contentsOf: ipAddr)
         // Port
@@ -212,8 +240,14 @@ struct P2PPeerFound: NetworkMessage, Equatable {
         return bytes
     }
 
-    public init(key: [UInt8], ipAddr: [UInt8], port: UInt16) {
+    public init(key: UInt256, ipAddr: [UInt8], port: UInt16) {
         self.key = key
+        self.ipAddr = ipAddr
+        self.port = port
+    }
+
+    public init(key: [UInt8], ipAddr: [UInt8], port: UInt16) {
+        self.key = UInt256(bytes: key)
         self.ipAddr = ipAddr
         self.port = port
     }
@@ -222,15 +256,13 @@ struct P2PPeerFound: NetworkMessage, Equatable {
         guard serializedBodyBytes.count == 50 else {
             return nil
         }
-        self.key = Array(serializedBodyBytes[0...31])
+        self.key = UInt256(bytes: Array(serializedBodyBytes[0...31]))
         self.ipAddr = Array(serializedBodyBytes[32...47])
         self.port = serializedBodyBytes[48...].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
     }
-
-
 }
 
-// MARK: P2PPredecessorNotify
+// MARK: - P2PPredecessorNotify
 
 struct P2PPredecessorNotify: NetworkMessage, Equatable {
     static let messageTypeID: NetworkMessageTypeID = .P2PPredecessorNotifyID
@@ -265,7 +297,7 @@ struct P2PPredecessorNotify: NetworkMessage, Equatable {
 
 }
 
-// MARK: P2PPRedecessorReply
+// MARK: - P2PPRedecessorReply
 
 struct P2PPredecessorReply: NetworkMessage, Equatable {
     static let messageTypeID: NetworkMessageTypeID = .P2PPredecessorReplyID

@@ -162,8 +162,6 @@ public struct Configuration {
                 dict[sectionName] = currentSection
             }
         }
-
         return dict
     }
-
 }
