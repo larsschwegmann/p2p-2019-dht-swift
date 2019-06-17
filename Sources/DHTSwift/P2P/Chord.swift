@@ -6,17 +6,19 @@ import AsyncKit
 // MARK: Chord Error
 
 enum ChordError: LocalizedError {
+    case missingConfiguration
+    case neverBootstrapped
     case unexpectedResponseFromPeer(NetworkMessage)
     case storageFailure(key: UInt256)
 }
 
 // MARK: Chord
 
-class Chord {
+public class Chord {
 
     // MARK: Singleton
 
-    static let shared = Chord()
+    public static let shared = Chord()
 
     // MARK: Properties
 
@@ -25,6 +27,12 @@ class Chord {
     var keyStore = [UInt256: [UInt8]]()
     var fingerTable = [Int: SocketAddress]() // Use dict instead of array for safe conditional access
     var predecessor: SocketAddress?
+    var successor: SocketAddress? {
+        return fingerTable[0]
+    }
+    var currentAddress: SocketAddress {
+        return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
+    }
 
     private var eventLoopGroup: EventLoopGroup
     private let timeout: TimeAmount
@@ -43,23 +51,52 @@ class Chord {
 
     // MARK: Static setup for shared singleton
 
-    static func setup(_ config: Configuration) {
+    public static func setup(_ config: Configuration) {
         Chord.configuration = config
     }
 
-    // MARK: Public functions
+    // MARK: -
+
+    func responsibleFor(identifier: Identifier) throws -> Bool {
+        guard let predecessor = self.predecessor else {
+            throw ChordError.neverBootstrapped
+        }
+        let current = self.currentAddress
+        let preID = Identifier.socketAddress(address: predecessor)
+        let currentID = Identifier.socketAddress(address: current)
+        return preID < identifier && identifier <= currentID
+    }
+
+    func closestPeer(identifier: Identifier) throws -> SocketAddress {
+        if try self.responsibleFor(identifier: identifier) {
+            return self.currentAddress
+        }
+        let current = self.currentAddress
+        let currentID = Identifier.socketAddress(address: current)
+        let diff = identifier.hashValue! - currentID.hashValue!
+        let zeros = diff.leadingZeroBitCount
+        return fingerTable[zeros] ?? self.successor!
+    }
+
+    // MARK: Public helper functions
+
+
+    func bootstrap() {
+        let currentAddress = self.currentAddress
+        for i in 0..<self.configuration.fingers {
+            self.fingerTable[i] = currentAddress
+        }
+        self.predecessor = currentAddress
+    }
 
     /**
      Joins an existing Chord network using a known Bootstrap Peer
     */
     func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
-        // Our id
-        let currentAddress = try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
-        guard let currentId = Identifier.socketAddress(address: currentAddress).hashValue else {
-            fatalError("Could not obtain SHA256 hash of address: \(currentAddress)")
-        }
-        let successorFuture = findPeer(forKey: currentId, peerAddress: bootstrapAddress)
-        let predecessorFuture = notifyPredecessor(address: currentAddress, peerAddress: bootstrapAddress)
+        let current = self.currentAddress
+        let currentId = Identifier.socketAddress(address: current)
+        let successorFuture = findPeer(forIdentifier: currentId, peerAddress: bootstrapAddress)
+        let predecessorFuture = notifyPredecessor(address: current, peerAddress: bootstrapAddress)
 
         predecessorFuture.whenSuccess { [weak self] predecessorAddress in
             // Update the predecessor address with our predecessor
@@ -68,7 +105,13 @@ class Chord {
 
         successorFuture.whenSuccess { [weak self] successorAddress in
             // Update the finger table witho ourselves and our successor
-            self?.fingerTable = [0: currentAddress, 1: successorAddress]
+            self?.fingerTable = [0: successorAddress]
+            guard let ref = self else {
+                return
+            }
+            for i in 1..<ref.configuration.fingers {
+                ref.fingerTable[i] = ref.currentAddress
+            }
         }
 
         // TODO: Un-Unglify this
@@ -82,9 +125,10 @@ class Chord {
     /**
      Finds the peer responsible for the given key
     */
-    func findPeer(forKey key: UInt256, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
+    func findPeer(forIdentifier identifier: Identifier, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
+        let hash = identifier.hashValue!
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
-        let message = P2PPeerFind(key: key)
+        let message = P2PPeerFind(key: hash)
         return client.request(socketAddress: peerAddress, requestMessage: message).flatMapThrowing { response -> SocketAddress in
             switch response {
             case let peerFound as P2PPeerFound:

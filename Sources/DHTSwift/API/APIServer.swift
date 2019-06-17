@@ -3,8 +3,6 @@ import NIO
 import NIOExtras
 import UInt256
 
-var dummyDict = [UInt256: [UInt8]]()
-
 // MARK: - APIServer
 
 public class APIServer {

@@ -33,3 +33,13 @@ enum Identifier {
         }
     }
 }
+
+extension Identifier: Comparable {
+    static func < (lhs: Identifier, rhs: Identifier) -> Bool {
+        return lhs.hashValue! < rhs.hashValue!
+    }
+
+    static func == (lhs: Identifier, rhs: Identifier) -> Bool {
+        return lhs.hashValue == rhs.hashValue
+    }
+}

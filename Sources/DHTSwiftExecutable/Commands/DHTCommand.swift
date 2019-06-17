@@ -18,7 +18,7 @@ public class DHTCommand: Command {
         }
 
         // Create Event Loop Group for use in APIServer and P2PServer
-
+        Chord.setup(config)
         let apiServer = APIServer(config: config)
         let p2pServer = P2PServer(config: config)
         try apiServer.start().and(try p2pServer.start()).wait()
