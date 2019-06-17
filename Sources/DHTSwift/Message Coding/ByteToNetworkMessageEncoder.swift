@@ -6,10 +6,24 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
     public typealias InboundOut = NetworkMessage
 
     public mutating func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
-        guard buffer.readableBytes >= 2,
+        guard buffer.readableBytes >= 4,
             let sizeBytes = buffer.getBytes(at: buffer.readerIndex, length: 2) else {
             // The first 2 bytes of the message indicate the size
             return .needMoreData
+        }
+
+        guard let messageTypeIDBytes = buffer.getBytes(at: buffer.readerIndex + 2, length: 2) else {
+            print("Can't get messageTypeID bytes")
+            buffer.moveReaderIndex(forwardBy: 4)
+            return .continue
+        }
+
+        let messageTypeIDRaw = messageTypeIDBytes.withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
+
+        guard let messageTypeID = NetworkMessageTypeID.init(rawValue: messageTypeIDRaw) else {
+            print("Unrecognized messageTypeID: \(messageTypeIDRaw)")
+            buffer.moveReaderIndex(forwardBy: 4)
+            return .continue
         }
 
         let size = sizeBytes.withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
@@ -20,12 +34,6 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
 
         guard let structBytes = buffer.readBytes(length: Int(size)) else {
             // This is technically impossible
-            return .needMoreData
-        }
-
-        let messageTypeIDRaw = structBytes[2...3].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
-        guard let messageTypeID = NetworkMessageTypeID.init(rawValue: messageTypeIDRaw) else {
-            // Error or unknown message type id
             return .continue
         }
 
@@ -39,9 +47,7 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
     }
 
     public mutating func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+        buffer.moveReaderIndex(forwardBy: buffer.readableBytes)
         return .continue
     }
-
-
-
 }

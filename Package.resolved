@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "async-kit",
+        "repositoryURL": "https://github.com/vapor/async-kit.git",
+        "state": {
+          "branch": null,
+          "revision": "b5742bfbbe2d60f3b77465a0907777261e418f23",
+          "version": "1.0.0-alpha.1"
+        }
+      },
+      {
         "package": "CryptoSwift",
         "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
         "state": {

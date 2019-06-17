@@ -25,3 +25,7 @@ extension UInt256 {
         return bytes
     }
 }
+
+extension BinaryInteger {
+    
+}

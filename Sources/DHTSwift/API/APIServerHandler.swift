@@ -28,7 +28,7 @@ final class APIServerHandler: ChannelInboundHandler {
 
             let success = DHTSuccess(key: get.key, value: value)
             print("APIServer: Sent DHTSuccess \(success) for key \(get.key)")
-            context.write(wrapOutboundOut(success), promise: nil)
+            context.writeAndFlush(wrapOutboundOut(success), promise: nil)
         case let put as DHTPut:
             print("APIServer: Got DHT PUT request with key \(put.key) value \(put.value)")
             dummyDict[put.key] = put.value
@@ -37,11 +37,6 @@ final class APIServerHandler: ChannelInboundHandler {
         default:
             return
         }
-    }
-
-    // Flush it out. This can make use of gathering writes if multiple buffers are pending
-    public func channelReadComplete(context: ChannelHandlerContext) {
-        context.flush()
     }
 
     func channelUnregistered(context: ChannelHandlerContext) {

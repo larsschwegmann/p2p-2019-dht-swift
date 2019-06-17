@@ -8,7 +8,7 @@ public struct DHTPut: NetworkMessage, Equatable {
 
     let ttl: UInt16
     let replication: UInt8
-    let key: UInt256 // 256 Bit
+    let key: UInt256
     let value: [UInt8]
 
     public var serializedBody: [UInt8] {
@@ -62,7 +62,7 @@ public struct DHTPut: NetworkMessage, Equatable {
 public struct DHTGet: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTGetID
 
-    let key: UInt256 // 256 Bit
+    let key: UInt256
 
     public var serializedBody: [UInt8] {
         return key.getBytes()
@@ -89,7 +89,7 @@ public struct DHTGet: NetworkMessage, Equatable {
 public struct DHTSuccess: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTSuccessID
 
-    let key: UInt256 // 256 Bit
+    let key: UInt256
     let value: [UInt8]
 
     public var serializedBody: [UInt8] {
