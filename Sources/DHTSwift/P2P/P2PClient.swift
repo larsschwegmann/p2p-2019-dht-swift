@@ -23,11 +23,11 @@ class P2PClient {
                 channel.pipeline.addHandler(DebugInboundEventsHandler()).flatMap { _ in
                     channel.pipeline.addHandler(DebugOutboundEventsHandler())
                 }.flatMap { _ in
-                    channel.pipeline.addHandler(ByteToMessageHandler<ByteToNetworkMessageDecoder>(ByteToNetworkMessageDecoder()))
+                    channel.pipeline.addHandler(ByteToMessageHandler<ByteToNetworkMessageDecoder>(ByteToNetworkMessageDecoder()), name: "byteToMessage")
                 }.flatMap{ _ in
-                    channel.pipeline.addHandler(RequestResponseHandler<NetworkMessage, NetworkMessage>())
+                    channel.pipeline.addHandler(MessageToByteHandler<NetworkMessageToByteEncoder>(NetworkMessageToByteEncoder()), name: "messageToByte")
                 }.flatMap { _ in
-                    channel.pipeline.addHandler(MessageToByteHandler<NetworkMessageToByteEncoder>(NetworkMessageToByteEncoder()))
+                    channel.pipeline.addHandler(RequestResponseHandler<NetworkMessage, NetworkMessage>(), name: "request-response")
                 }
         }
     }
@@ -36,23 +36,18 @@ class P2PClient {
         let channelFuture = bootstrap.connect(to: socketAddress)
         let retFuture = channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
             let promise = channel.eventLoop.makePromise(of: NetworkMessage.self)
-            return channel.pipeline.addHandler(P2PClientHandler(request: requestMessage, promise: promise)).flatMap({ _ -> EventLoopFuture<NetworkMessage> in
+            return channel.pipeline.addHandler(P2PClientHandler(request: requestMessage, promise: promise), name: "P2PClientHandler").flatMap({ _ -> EventLoopFuture<NetworkMessage> in
                 return promise.futureResult
             })
         }
 
-        retFuture.whenComplete { _ in
-            channelFuture.whenComplete({ result in
-                switch result {
-                case .success(let channel):
-                    try? channel.close().wait()
-                case .failure(_):
-                    return
+        return retFuture.flatMap { message -> EventLoopFuture<NetworkMessage> in
+            return channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
+                return channel.close().map { _ -> NetworkMessage in
+                    return message
                 }
-            })
+            }
         }
-
-        return retFuture
     }
 }
 

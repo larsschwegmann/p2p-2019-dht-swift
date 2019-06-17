@@ -67,13 +67,27 @@ public class Chord {
         return preID < identifier && identifier <= currentID
     }
 
+    func responsibleFor(identifier: UInt256) throws -> Bool {
+        guard let predecessor = self.predecessor else {
+            throw ChordError.neverBootstrapped
+        }
+        let current = self.currentAddress
+        let preID = Identifier.socketAddress(address: predecessor)
+        let currentID = Identifier.socketAddress(address: current)
+        return preID.hashValue! < identifier && identifier <= currentID.hashValue!
+    }
+
     func closestPeer(identifier: Identifier) throws -> SocketAddress {
+        return try closestPeer(identifier: identifier.hashValue!)
+    }
+
+    func closestPeer(identifier: UInt256) throws -> SocketAddress {
         if try self.responsibleFor(identifier: identifier) {
             return self.currentAddress
         }
         let current = self.currentAddress
         let currentID = Identifier.socketAddress(address: current)
-        let diff = identifier.hashValue! - currentID.hashValue!
+        let diff = identifier - currentID.hashValue!
         let zeros = diff.leadingZeroBitCount
         return fingerTable[zeros] ?? self.successor!
     }
@@ -81,7 +95,7 @@ public class Chord {
     // MARK: Public helper functions
 
 
-    func bootstrap() {
+    public func bootstrap() {
         let currentAddress = self.currentAddress
         for i in 0..<self.configuration.fingers {
             self.fingerTable[i] = currentAddress
@@ -92,7 +106,7 @@ public class Chord {
     /**
      Joins an existing Chord network using a known Bootstrap Peer
     */
-    func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
+    public func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
         let current = self.currentAddress
         let currentId = Identifier.socketAddress(address: current)
         let successorFuture = findPeer(forIdentifier: currentId, peerAddress: bootstrapAddress)
