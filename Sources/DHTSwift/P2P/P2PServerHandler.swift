@@ -34,6 +34,11 @@ final class P2PServerHandler: ChannelInboundHandler {
             }
 
             print("P2PServer; Received Predecessor Notify with address")
+
+        case let storageGet as P2PStorageGet:
+            handleStorageGet(storageGet: storageGet, context: context)
+        case let storagePut as P2PStoragePut:
+            handleStoragePut(storagePut: storagePut, context: context)
         default:
             print("P2PServer: Got unexpected message \(message)")
             return
@@ -58,5 +63,75 @@ final class P2PServerHandler: ChannelInboundHandler {
     }
 
     // MARK: Private helper functions
+
+    private func handleStorageGet(storageGet: P2PStorageGet, context: ChannelHandlerContext) {
+        let chord = Chord.shared
+        let rawKey = storageGet.key
+        let replicationIndex = storageGet.replicationIndex
+        let key = Identifier.Key(rawKey: rawKey, replicationIndex: replicationIndex)
+        let id = Identifier.key(key)
+
+        print("P2PServer: Received STORAGE GET request for key \(key)")
+
+        guard let responsible = try? chord.responsibleFor(identifier: id) else {
+            print("P2PServer: Current node not bootstrapped")
+            context.close(promise: nil)
+            return
+        }
+        if responsible {
+            guard let hashValue = id.hashValue else {
+                print("P2PServer: Could not decode address to create hash")
+                return
+            }
+            let valueOpt = chord.keyStore[hashValue]
+            guard let value = valueOpt else {
+                print("P2PServer: Could not find value for key: \(key)")
+                let storageGetFailure = P2PStorageFailure(key: hashValue)
+                context.writeAndFlush(wrapOutboundOut(storageGetFailure), promise: nil)
+                return
+            }
+            print("P2PServer: Found value for key \(key) and replying with STORAGE GET SUCCESS")
+
+            let storageGetSuccess = P2PStorageGetSuccess(key: hashValue, value: value)
+            context.writeAndFlush(wrapOutboundOut(storageGetSuccess), promise: nil)
+        }
+    }
+
+    private func handleStoragePut(storagePut: P2PStoragePut, context: ChannelHandlerContext) {
+        let chord = Chord.shared
+        let rawKey = storagePut.key
+        let replicationIndex = storagePut.replicationIndex
+        let key = Identifier.Key(rawKey: rawKey, replicationIndex: replicationIndex)
+        let id = Identifier.key(key)
+        let value = storagePut.value
+
+        print("P2PServer: Received STORAGE PUT request for key \(key)")
+
+        guard let responsible = try? chord.responsibleFor(identifier: id) else {
+            print("P2PServer: Current node not bootstrapped")
+            context.close(promise: nil)
+            return
+        }
+        if responsible {
+            guard let hashedKey = id.hashValue else {
+                print("P2PServer: Could not decode address to create hash")
+                return
+            }
+            let valueOpt = chord.keyStore[hashedKey]
+
+            if let _ = valueOpt {
+                print("P2PServer: Value for key \(key) already exists, replying with STORAGE PUT FAILURE")
+                let storagePutFailure = P2PStorageFailure(key: hashedKey)
+                context.writeAndFlush(wrapOutboundOut(storagePutFailure), promise: nil)
+                return
+            }
+
+            chord.keyStore[hashedKey] = value
+
+            print("P2PServer: Stored value for key \(hashedKey), replying with STORAGE PUT SUCCESS")
+            let storageGetSuccess = P2PStorageGetSuccess(key: hashedKey, value: value)
+            context.writeAndFlush(wrapOutboundOut(storageGetSuccess), promise: nil)
+        }
+    }
 }
 
