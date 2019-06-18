@@ -12,6 +12,7 @@ enum Identifier {
 
     case socketAddress(address: SocketAddress)
     case key(Key)
+    case existingHash(UInt256)
 
     var hashValue: UInt256? {
         switch self {
@@ -30,7 +31,15 @@ enum Identifier {
         case .key(let key):
             let keyBytes = key.rawKey.getBytes() + [key.replicationIndex]
             return UInt256(bytes:keyBytes.sha256())
+        case .existingHash(let hash):
+            return hash
         }
+    }
+
+    func isBetween(lhs: Identifier, rhs: Identifier) -> Bool {
+        let (diff1, _) = rhs.hashValue!.subtractingReportingOverflow(self.hashValue!)
+        let (diff2, _) = lhs.hashValue!.subtractingReportingOverflow(lhs.hashValue!)
+        return diff1 < diff2
     }
 }
 
@@ -41,5 +50,12 @@ extension Identifier: Comparable {
 
     static func == (lhs: Identifier, rhs: Identifier) -> Bool {
         return lhs.hashValue == rhs.hashValue
+    }
+}
+
+extension Identifier {
+    public static func +(_ lhs: Identifier, _ rhs: Identifier) -> Identifier {
+        let (retVal, _) = lhs.hashValue!.addingReportingOverflow(rhs.hashValue!)
+        return Identifier.existingHash(retVal)
     }
 }

@@ -41,6 +41,7 @@ public class Chord {
     private var eventLoopGroup: EventLoopGroup
     private let timeout: TimeAmount
     private let configuration: Configuration
+    private let stabilization: Stabilization
 
     // MARK: Initializers
 
@@ -51,6 +52,7 @@ public class Chord {
         self.configuration = config
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.timeout = timeout
+        self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration)
     }
 
     // MARK: Static setup for shared singleton
@@ -105,6 +107,7 @@ public class Chord {
             self.fingerTable[i] = currentAddress
         }
         self.predecessor = currentAddress
+        self.stabilization.start()
     }
 
     /**
@@ -132,11 +135,11 @@ public class Chord {
             }
         }
 
-        // TODO: Un-Unglify this
-        return predecessorFuture.flatMap({ predecessorFuture -> EventLoopFuture<Void> in
-            return successorFuture.map({ successorFuture -> Void in
-                return ()
-            })
+        let loop = self.eventLoopGroup.next()
+        let combined = [predecessorFuture, successorFuture].flatten(on: loop).transform(to: ())
+        return combined.map({ [weak self] _ in
+            self?.stabilization.start()
+            return ()
         })
     }
 
