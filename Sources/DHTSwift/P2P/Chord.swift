@@ -6,7 +6,6 @@ import AsyncKit
 // MARK: Chord Error
 
 enum ChordError: LocalizedError {
-    case missingConfiguration
     case neverBootstrapped
     case unexpectedResponseFromPeer(NetworkMessage)
     case storageFailure(key: UInt256)
@@ -28,7 +27,12 @@ public class Chord {
     var fingerTable = [Int: SocketAddress]() // Use dict instead of array for safe conditional access
     var predecessor: SocketAddress?
     var successor: SocketAddress? {
-        return fingerTable[0]
+        get {
+            return fingerTable[0]
+        }
+        set {
+            fingerTable[0] = newValue
+        }
     }
     var currentAddress: SocketAddress {
         return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
@@ -92,7 +96,7 @@ public class Chord {
         return fingerTable[zeros] ?? self.successor!
     }
 
-    // MARK: Public helper functions
+    // MARK: - Public helper functions
 
 
     public func bootstrap() {

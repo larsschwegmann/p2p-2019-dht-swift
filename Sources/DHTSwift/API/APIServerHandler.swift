@@ -34,6 +34,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(success) else {
                         fatalError("self is nil")
                     }
+                    print("APIServer: Successfully got \(success)")
                     context.writeAndFlush(data, promise: nil)
                 }
 
@@ -42,11 +43,37 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(failure) else {
                         fatalError("self is nil")
                     }
+                    print("APIServer: Failed to get \(failure)")
                     context.writeAndFlush(data, promise: nil)
                 }
             }
         case let put as DHTPut:
             print("APIServer: Got DHT PUT request with key \(put.key) value \(put.value)")
+            for i in 0...put.replication + 1 {
+                let key = Identifier.Key(rawKey: put.key, replicationIndex: i)
+                guard let peerFuture = try? self.findPeer(identifier: Identifier.key(key)) else {
+                    fatalError("Could not find Peer for key \(put.key)")
+                }
+                let putFuture = peerFuture.map { peerAddress in
+                    chord.putValue(key: key, value: put.value, ttl: put.ttl, peerAddress: peerAddress)
+                }
+                putFuture.whenSuccess { [weak self] _ in
+                    let success = DHTSuccess(key: put.key, value: put.value)
+                    guard let data = self?.wrapOutboundOut(success) else {
+                        fatalError("self is nil")
+                    }
+                    print("APIServer: Successfully put \(success)")
+                    context.writeAndFlush(data, promise: nil)
+                }
+                putFuture.whenFailure { [weak self] error in
+                    let failure = DHTFailure(key: put.key)
+                    guard let data = self?.wrapOutboundOut(failure) else {
+                        fatalError("self is nil")
+                    }
+                    print("APIServer: Failed to put \(failure)")
+                    context.writeAndFlush(data, promise: nil)
+                }
+            }
         default:
             return
         }

@@ -32,9 +32,10 @@ final class P2PServerHandler: ChannelInboundHandler {
                 context.close(promise: nil)
                 return
             }
-
-            print("P2PServer; Received Predecessor Notify with address")
-
+            print("P2PServer; Received Predecessor Notify with address \(addr)")
+            let oldPredecessor = self.notifyPredecessor(predecessorAddress: addr)
+            let reply = P2PPredecessorReply(ipAddr: oldPredecessor.getIPv6Bytes()!, port: UInt16(oldPredecessor.port!))
+            context.writeAndFlush(wrapOutboundOut(reply), promise: nil)
         case let storageGet as P2PStorageGet:
             handleStorageGet(storageGet: storageGet, context: context)
         case let storagePut as P2PStoragePut:
@@ -133,5 +134,27 @@ final class P2PServerHandler: ChannelInboundHandler {
             context.writeAndFlush(wrapOutboundOut(storageGetSuccess), promise: nil)
         }
     }
+    
+    private func notifyPredecessor(predecessorAddress: SocketAddress) -> SocketAddress {
+        let chord = Chord.shared
+        let oldPredecessor = chord.predecessor!
+
+        if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: oldPredecessor)) {
+            print("P2PServer: Updated predecessor to \(predecessorAddress)")
+            chord.predecessor = predecessorAddress
+        }
+
+        if chord.predecessor == chord.currentAddress {
+            print("P2PServer: Updated predecessor to \(predecessorAddress)")
+            chord.predecessor = predecessorAddress
+        }
+
+        if chord.successor == chord.currentAddress {
+            print("P2PServer: Updated successor to \(predecessorAddress)")
+            chord.successor = predecessorAddress
+        }
+        return oldPredecessor
+    }
 }
+
 
