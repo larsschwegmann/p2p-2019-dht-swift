@@ -1,6 +1,7 @@
 import Foundation
 import SwiftCLI
 import NIO
+import NIOExtras
 import DHTSwift
 
 public class DHTCommand: Command {
@@ -25,12 +26,12 @@ public class DHTCommand: Command {
             try Chord.shared.bootstrap(bootstrapAddress: SocketAddress.init(ipAddress: ip, port: port)).wait()
             let apiServer = APIServer(config: config)
             let p2pServer = P2PServer(config: config)
-            try apiServer.start().and(try p2pServer.start()).wait()
+            (_,_) = try apiServer.start().and(try p2pServer.start()).wait()
         } else {
             Chord.shared.bootstrap()
             let apiServer = APIServer(config: config)
             let p2pServer = P2PServer(config: config)
-            try apiServer.start().and(try p2pServer.start()).wait()
+            (_, _) = try apiServer.start().and(try p2pServer.start()).wait()
         }
 
     }
