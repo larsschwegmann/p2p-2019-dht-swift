@@ -17,9 +17,8 @@ extension SocketAddress {
         self.init(addr, host: "")
     }
 
-    /**
-     Returns the the bytes of the SocketAddress regarding to the doku of bene
-    */
+
+    /// Returns the the bytes of the SocketAddress regarding to the doku of bene
     func getIPv6Bytes() -> [UInt8]? {
         switch self {
         case .v4(let v4):

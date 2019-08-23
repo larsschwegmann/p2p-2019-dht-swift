@@ -7,12 +7,14 @@ import UInt256
 
 class Stabilization {
 
-    let eventLoopGroup: EventLoopGroup
-    let config: Configuration
+    private let eventLoopGroup: EventLoopGroup
+    private let config: Configuration
+    private let chord: Chord
 
-    init(eventLoopGroup: EventLoopGroup, config: Configuration) {
+    init(eventLoopGroup: EventLoopGroup, config: Configuration, chord: Chord) {
         self.eventLoopGroup = eventLoopGroup
         self.config = config
+        self.chord = chord
     }
 
     func start() {
@@ -40,7 +42,6 @@ class Stabilization {
     }
 
     private func updateSuccessor() -> EventLoopFuture<Void>? {
-        let chord = Chord.shared
         let current = chord.currentAddress
         guard let successor = chord.successor else {
             return nil
@@ -52,14 +53,13 @@ class Stabilization {
             let newSuccessorId = Identifier.socketAddress(address: newSuccessor)
 
             if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
-                Chord.shared.successor = newSuccessor
+                self.chord.successor = newSuccessor
             }
             return ()
         }
     }
 
     private func updateFingers() -> EventLoopFuture<Void>? {
-        let chord = Chord.shared
         let current = chord.currentAddress
         let fingers = chord.fingerTable
         guard let successor = chord.successor else {
@@ -71,7 +71,7 @@ class Stabilization {
         return fingers.map { (key, value) -> EventLoopFuture<Void> in
             let identifier = Identifier.socketAddress(address: current) + Identifier.existingHash(UInt256(0x1 << (255 - key)))
             return chord.findPeer(forIdentifier: identifier, peerAddress: successor).map({ peerAddress in
-                Chord.shared.fingerTable[key] = peerAddress
+                self.chord.fingerTable[key] = peerAddress
             })
         }.flatten(on: loop)
     }

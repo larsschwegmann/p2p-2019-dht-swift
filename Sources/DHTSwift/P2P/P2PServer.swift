@@ -11,12 +11,14 @@ public class P2PServer {
     public let configuration: Configuration
     public let eventLoopGroup: EventLoopGroup
     public let bootstrap: ServerBootstrap
+    private let chord: Chord
     private var channel: Channel?
 
     // MARK: Initializers
 
-    public init(config: Configuration) {
+    public init(config: Configuration, chord: Chord) {
         self.configuration = config
+        self.chord = chord
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: config.workerThreads)
         self.bootstrap = ServerBootstrap(group: self.eventLoopGroup)
             // Specify backlog and enable SO_REUSEADDR for the server itself
@@ -31,7 +33,7 @@ public class P2PServer {
                 }.flatMap { _ in
                     channel.pipeline.addHandler(MessageToByteHandler<NetworkMessageToByteEncoder>(NetworkMessageToByteEncoder()))
                 }.flatMap { _ in
-                    channel.pipeline.addHandler(P2PServerHandler())
+                    channel.pipeline.addHandler(P2PServerHandler(chord: chord))
                 }
             }
 

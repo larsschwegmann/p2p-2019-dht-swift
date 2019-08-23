@@ -6,6 +6,12 @@ final class APIServerHandler: ChannelInboundHandler {
     public typealias InboundIn = NetworkMessage
     public typealias OutboundOut = NetworkMessage
 
+    private let chord: Chord
+
+    public init(chord: Chord) {
+        self.chord = chord
+    }
+
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
@@ -14,7 +20,6 @@ final class APIServerHandler: ChannelInboundHandler {
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let message = unwrapInboundIn(data)
-        let chord = Chord.shared
         switch message {
         case let get as DHTGet:
             // DHT GET Request
@@ -26,7 +31,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     fatalError("Could not find Peer for key \(get.key)")
                 }
                 let getFuture = peerFuture.flatMap { peerAddress in
-                    chord.getValue(key: key, peerAddress: peerAddress)
+                    self.chord.getValue(key: key, peerAddress: peerAddress)
                 }
 
                 getFuture.whenSuccess { [weak self] value in
@@ -55,7 +60,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     fatalError("Could not find Peer for key \(put.key)")
                 }
                 let putFuture = peerFuture.map { peerAddress in
-                    chord.putValue(key: key, value: put.value, ttl: put.ttl, peerAddress: peerAddress)
+                    self.chord.putValue(key: key, value: put.value, ttl: put.ttl, peerAddress: peerAddress)
                 }
                 putFuture.whenSuccess { [weak self] _ in
                     let success = DHTSuccess(key: put.key, value: put.value)
@@ -94,7 +99,6 @@ final class APIServerHandler: ChannelInboundHandler {
     // MARK: Private helper functions
 
     private func findPeer(identifier: Identifier) throws -> EventLoopFuture<SocketAddress> {
-        let chord = Chord.shared
         let peer = try chord.closestPeer(identifier: identifier)
         return chord.findPeer(forIdentifier: identifier, peerAddress: peer)
     }

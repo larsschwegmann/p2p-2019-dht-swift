@@ -13,11 +13,13 @@ public class APIServer {
     public let eventLoopGroup: EventLoopGroup
     public let bootstrap: ServerBootstrap
     private var channel: Channel?
+    private let chord: Chord
 
     // MARK: Initializers
 
-    public init(config: Configuration) {
+    public init(config: Configuration, chord: Chord) {
         self.configuration = config
+        self.chord = chord
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.bootstrap = ServerBootstrap(group: self.eventLoopGroup)
             // Specify backlog and enable SO_REUSEADDR for the server itself
@@ -32,7 +34,7 @@ public class APIServer {
                 }.flatMap { _ in
                     channel.pipeline.addHandler(MessageToByteHandler<NetworkMessageToByteEncoder>(NetworkMessageToByteEncoder()))
                 }.flatMap { _ in
-                    channel.pipeline.addHandler(APIServerHandler())
+                    channel.pipeline.addHandler(APIServerHandler(chord: chord))
                 }
             }
 

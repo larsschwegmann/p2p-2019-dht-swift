@@ -15,13 +15,7 @@ enum ChordError: LocalizedError {
 
 public class Chord {
 
-    // MARK: Singleton
-
-    public static let shared = Chord()
-
     // MARK: Properties
-
-    public static var configuration: Configuration?
 
     var keyStore = [UInt256: [UInt8]]()
     var fingerTable = [Int: SocketAddress]() // Use dict instead of array for safe conditional access
@@ -41,24 +35,14 @@ public class Chord {
     private var eventLoopGroup: EventLoopGroup
     private let timeout: TimeAmount
     private let configuration: Configuration
-    private let stabilization: Stabilization
+    private var stabilization: Stabilization?
 
     // MARK: Initializers
 
-    private init(timeout: TimeAmount = TimeAmount.seconds(10)) {
-        guard let config = Chord.configuration else {
-            fatalError("No config was supplied for Chord shared instance")
-        }
+    public init(config: Configuration, timeout: TimeAmount = TimeAmount.seconds(10)) {
         self.configuration = config
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.timeout = timeout
-        self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration)
-    }
-
-    // MARK: Static setup for shared singleton
-
-    public static func setup(_ config: Configuration) {
-        Chord.configuration = config
     }
 
     // MARK: -
@@ -107,13 +91,15 @@ public class Chord {
             self.fingerTable[i] = currentAddress
         }
         self.predecessor = currentAddress
-        self.stabilization.start()
+        self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
+        self.stabilization?.start()
     }
 
     /**
      Joins an existing Chord network using a known Bootstrap Peer
     */
     public func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
+        self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         let current = self.currentAddress
         let currentId = Identifier.socketAddress(address: current)
         let successorFuture = findPeer(forIdentifier: currentId, peerAddress: bootstrapAddress)
@@ -138,7 +124,7 @@ public class Chord {
         let loop = self.eventLoopGroup.next()
         let combined = [predecessorFuture, successorFuture].flatten(on: loop).transform(to: ())
         return combined.map({ [weak self] _ in
-            self?.stabilization.start()
+            self?.stabilization?.start()
             return ()
         })
     }

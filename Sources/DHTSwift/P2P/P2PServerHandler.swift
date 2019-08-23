@@ -6,6 +6,12 @@ final class P2PServerHandler: ChannelInboundHandler {
     public typealias InboundIn = NetworkMessage
     public typealias OutboundOut = NetworkMessage
 
+    private let chord: Chord
+
+    init(chord: Chord) {
+        self.chord = chord
+    }
+
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
@@ -17,7 +23,6 @@ final class P2PServerHandler: ChannelInboundHandler {
         switch message {
         case let find as P2PPeerFind:
             print("P2PServer: Received Peer Find for key \(find.key)")
-            let chord = Chord.shared
             guard let peer = try? chord.closestPeer(identifier: find.key) else {
                 print("P2PServer: Could not find closest peer for id \(find.key)")
                 context.close(promise: nil)
@@ -66,7 +71,6 @@ final class P2PServerHandler: ChannelInboundHandler {
     // MARK: Private helper functions
 
     private func handleStorageGet(storageGet: P2PStorageGet, context: ChannelHandlerContext) {
-        let chord = Chord.shared
         let rawKey = storageGet.key
         let replicationIndex = storageGet.replicationIndex
         let key = Identifier.Key(rawKey: rawKey, replicationIndex: replicationIndex)
@@ -99,7 +103,6 @@ final class P2PServerHandler: ChannelInboundHandler {
     }
 
     private func handleStoragePut(storagePut: P2PStoragePut, context: ChannelHandlerContext) {
-        let chord = Chord.shared
         let rawKey = storagePut.key
         let replicationIndex = storagePut.replicationIndex
         let key = Identifier.Key(rawKey: rawKey, replicationIndex: replicationIndex)
@@ -136,7 +139,6 @@ final class P2PServerHandler: ChannelInboundHandler {
     }
     
     private func notifyPredecessor(predecessorAddress: SocketAddress) -> SocketAddress {
-        let chord = Chord.shared
         let oldPredecessor = chord.predecessor!
 
         if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: oldPredecessor)) {
