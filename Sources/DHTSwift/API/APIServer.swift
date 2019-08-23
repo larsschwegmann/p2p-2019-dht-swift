@@ -28,10 +28,6 @@ public class APIServer {
             .childChannelInitializer { channel in
                 // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
                 channel.pipeline.addHandler(BackPressureHandler()).flatMap { _ in
-                    channel.pipeline.addHandler(DebugInboundEventsHandler())
-                }.flatMap { _ in
-                    channel.pipeline.addHandler(DebugOutboundEventsHandler())
-                }.flatMap { _ in
                     channel.pipeline.addHandler(ByteToMessageHandler<ByteToNetworkMessageDecoder>(ByteToNetworkMessageDecoder()))
                 }.flatMap { _ in
                     channel.pipeline.addHandler(MessageToByteHandler<NetworkMessageToByteEncoder>(NetworkMessageToByteEncoder()))

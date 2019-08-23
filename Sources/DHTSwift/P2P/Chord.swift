@@ -21,7 +21,7 @@ public class Chord {
 
     // MARK: Properties
 
-    private static var configuration: Configuration?
+    public static var configuration: Configuration?
 
     var keyStore = [UInt256: [UInt8]]()
     var fingerTable = [Int: SocketAddress]() // Use dict instead of array for safe conditional access

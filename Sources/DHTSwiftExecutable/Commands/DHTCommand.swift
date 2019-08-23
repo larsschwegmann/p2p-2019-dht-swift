@@ -21,7 +21,7 @@ public class DHTCommand: Command {
         }
 
         // Create Event Loop Group for use in APIServer and P2PServer
-        Chord.setup(config)
+        Chord.configuration = config
         if let ip = bootstrapKey.value, let port = bootstrapPortKey.value {
             try Chord.shared.bootstrap(bootstrapAddress: SocketAddress.init(ipAddress: ip, port: port)).wait()
             let apiServer = APIServer(config: config)
