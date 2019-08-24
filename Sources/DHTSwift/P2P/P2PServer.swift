@@ -4,7 +4,7 @@ import UInt256
 
 // MARK: - P2PServer
 
-public class P2PServer {
+public final class P2PServer {
 
     // MARK: Properties
 

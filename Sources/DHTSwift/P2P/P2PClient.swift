@@ -4,7 +4,7 @@ import NIOExtras
 
 // MARK: - P2PClient
 
-class P2PClient {
+final class P2PClient {
 
     // MARK: Properties
 

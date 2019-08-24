@@ -2,7 +2,7 @@ import Foundation
 import SwiftCLI
 import DHTSwift
 
-class APIClientCommand: CommandGroup {
+final class APIClientCommand: CommandGroup {
 
     var shortDescription: String = "Send a GET or PUT request to the DHT API server"
     let name = "api-client"
@@ -10,7 +10,7 @@ class APIClientCommand: CommandGroup {
     let children: [Routable] = [APIClientGetCommand(), APIClientPutCommand()]
 }
 
-class APIClientGetCommand: Command {
+final class APIClientGetCommand: Command {
     let name = "get"
 
     let configKey = Key<String>("-c", "--config", description: "Path to a custom config file")
@@ -40,7 +40,7 @@ class APIClientGetCommand: Command {
     }
 }
 
-class APIClientPutCommand: Command {
+final class APIClientPutCommand: Command {
     let name = "put"
 
     let key = Parameter()

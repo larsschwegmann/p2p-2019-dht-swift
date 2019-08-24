@@ -3,7 +3,7 @@ import NIO
 
 // MARK: - APIClientHandler
 
-class APIClientHandler: ChannelInboundHandler {
+final class APIClientHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias OutboundOut = ByteBuffer
 

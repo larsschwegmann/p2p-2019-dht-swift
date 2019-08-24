@@ -5,7 +5,7 @@ import UInt256
 
 // MARK: Stabilization
 
-class Stabilization {
+public final class Stabilization {
 
     private let eventLoopGroup: EventLoopGroup
     private let config: Configuration

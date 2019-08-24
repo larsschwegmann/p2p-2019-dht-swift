@@ -4,7 +4,7 @@ import NIO
 import NIOExtras
 import DHTSwift
 
-public class DHTCommand: Command {
+public final class DHTCommand: Command {
 
     let configKey = Key<String>("-c", "--config", description: "Path to a custom config file")
     let bootstrapKey = Key<String>("-b", "--bootstrap", description: "IP of bootstrap peer")

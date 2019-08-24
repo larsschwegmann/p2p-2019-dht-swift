@@ -5,7 +5,7 @@ import UInt256
 
 // MARK: - APIServer
 
-public class APIServer {
+public final class APIServer {
 
     // MARK: Properties
 

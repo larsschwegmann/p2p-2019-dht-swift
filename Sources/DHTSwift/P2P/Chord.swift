@@ -13,7 +13,7 @@ enum ChordError: LocalizedError {
 
 // MARK: Chord
 
-public class Chord {
+public final class Chord {
 
     // MARK: Properties
 

@@ -3,7 +3,7 @@ import NIO
 
 // MARK: - APIClient
 
-public class APICLient {
+public final class APICLient {
 
     // MARK: Properties
 
