@@ -84,7 +84,6 @@ public final class Chord {
 
     // MARK: - Public helper functions
 
-
     public func bootstrap() {
         let currentAddress = self.currentAddress
         for i in 0..<self.configuration.fingers {

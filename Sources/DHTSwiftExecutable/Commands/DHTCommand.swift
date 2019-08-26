@@ -30,7 +30,7 @@ public final class DHTCommand: Command {
             (_,_) = try apiServer.start().and(try p2pServer.start()).wait()
         } else {
             let chord = Chord(config: config)
-            chord.bootstrap()
+            chord.bootstrap() // Move this behind the api/p2p server.start()
             let apiServer = APIServer(config: config, chord: chord)
             let p2pServer = P2PServer(config: config, chord: chord)
             (_, _) = try apiServer.start().and(try p2pServer.start()).wait()

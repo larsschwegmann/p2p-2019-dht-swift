@@ -32,7 +32,7 @@ final class APIServerHandler: ChannelInboundHandler {
                 }
                 let getFuture = peerFuture.flatMap { peerAddress in
                     self.chord.getValue(key: key, peerAddress: peerAddress)
-                }
+                }.hop(to: context.eventLoop)
 
                 getFuture.whenSuccess { [weak self] value in
                     let success = DHTSuccess(key: get.key, value: value)
@@ -54,14 +54,14 @@ final class APIServerHandler: ChannelInboundHandler {
             }
         case let put as DHTPut:
             print("APIServer: Got DHT PUT request with key \(put.key) value \(put.value)")
-            for i in 0...put.replication + 1 {
+            for i in 0...put.replication {
                 let key = Identifier.Key(rawKey: put.key, replicationIndex: i)
                 guard let peerFuture = try? self.findPeer(identifier: Identifier.key(key)) else {
                     fatalError("Could not find Peer for key \(put.key)")
                 }
                 let putFuture = peerFuture.map { peerAddress in
                     self.chord.putValue(key: key, value: put.value, ttl: put.ttl, peerAddress: peerAddress)
-                }
+                }.hop(to: context.eventLoop)
                 putFuture.whenSuccess { [weak self] _ in
                     let success = DHTSuccess(key: put.key, value: put.value)
                     guard let data = self?.wrapOutboundOut(success) else {

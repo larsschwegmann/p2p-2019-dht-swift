@@ -34,7 +34,7 @@ final class P2PClient {
         let retFuture = channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
             let promise = channel.eventLoop.makePromise(of: NetworkMessage.self)
             return channel.pipeline.addHandler(P2PClientHandler(request: requestMessage, promise: promise), name: "P2PClientHandler").flatMap({ _ -> EventLoopFuture<NetworkMessage> in
-                print("P2PClient: Sent request")
+                print("P2PClient: Sent request to \(socketAddress) with message: \(requestMessage)")
                 return promise.futureResult
             })
         }
@@ -42,7 +42,7 @@ final class P2PClient {
         return retFuture.flatMap { message -> EventLoopFuture<NetworkMessage> in
             return channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
                 return channel.close().map { _ -> NetworkMessage in
-                    print("P2PClient: Got response: \(message), closed request channel")
+                    print("P2PClient: Got response: \(message) from \(socketAddress), closed request channel")
                     return message
                 }
             }
