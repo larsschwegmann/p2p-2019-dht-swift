@@ -1,0 +1,57 @@
+version: '3'
+services:
+  node1:
+    container_name: node1
+    build: .
+    ports:
+      - "7003-7004"
+    environment:
+      - NODEID=1
+    networks:
+      localnet:
+        ipv4_address: 10.5.0.2
+  node2:
+    container_name: node2
+    build: .
+    ports:
+      - "7003-7004"
+    environment:
+      - NODEID=2
+    depends_on:
+      - node1
+    networks:
+      localnet:
+        ipv4_address: 10.5.0.3
+  # node3:
+  #   container_name: node3
+  #   build: .
+  #   ports:
+  #     - "7003-7004"
+  #   environment:
+  #     - NODEID=3
+  #   depends_on:
+  #     - node2
+  #   networks:
+  #     localnet:
+  #       ipv4_address: 10.5.0.4
+  # node4:
+  #   container_name: node4
+  #   build: .
+  #   ports:
+  #     - "7003-7004"
+  #   environment:
+  #     - NODEID=4
+  #   depends_on:
+  #     - node3
+  #   networks:
+  #     localnet:
+  #       ipv4_address: 10.5.0.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 10.5.0.0/16

@@ -86,7 +86,11 @@ public final class Chord {
 
     // MARK: - Public helper functions
 
-    public func bootstrap() {
+    public func bootstrap() throws -> EventLoopFuture<Void> {
+        if let bootstrapAddress = self.configuration.bootstrapAddress,
+            let bootstrapPort = self.configuration.bootstrapPort {
+            return try self.bootstrap(bootstrapAddress: SocketAddress(ipAddress: bootstrapAddress, port: bootstrapPort))
+        }
         let currentAddress = self.currentAddress
         for i in 0..<self.configuration.fingers {
             self.fingerTable[i] = currentAddress
@@ -94,6 +98,7 @@ public final class Chord {
         self.predecessor = currentAddress
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         self.stabilization?.start()
+        return self.eventLoopGroup.future()
     }
 
     /**

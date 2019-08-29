@@ -39,6 +39,7 @@ public struct Configuration {
         static let timeout = "timeout"
         static let fingers = "fingers"
         static let stabilizationInterval = "stabilization_interval"
+        static let bootstrapAddress = "bootstrap_address"
     }
 
     // MARK: Configuration Properties
@@ -51,6 +52,8 @@ public struct Configuration {
     public var timeout: Int = 300000
     public var fingers: Int = 128
     public var stabilizationInterval: Int = 60
+    public var bootstrapAddress: String?
+    public var bootstrapPort: Int?
 
     // MARK: Initializers
 
@@ -98,6 +101,12 @@ public struct Configuration {
         if let stabilizationIntervalString = dhtConfig[ConfigKey.stabilizationInterval],
             let stabilizationInterval = Int(stabilizationIntervalString) {
             self.stabilizationInterval = stabilizationInterval
+        }
+
+        if let bootstrapAddressString = dhtConfig[ConfigKey.bootstrapAddress] {
+            let (bootstrapAddress, bootstrapPort) = try Configuration.parseInetAddress(bootstrapAddressString)
+            self.bootstrapAddress = bootstrapAddress
+            self.bootstrapPort = bootstrapPort
         }
     }
 
