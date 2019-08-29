@@ -12,12 +12,13 @@ let package = Package(
         .package(url: "https://github.com/vapor/async-kit.git", from: "1.0.0-alpha"),
         .package(url: "https://github.com/larsschwegmann/SwiftCLI.git", .branch("master")),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "1.0.0")),
-        .package(url: "https://github.com/larsschwegmann/UInt256.git", .branch("master"))
+        .package(url: "https://github.com/larsschwegmann/UInt256.git", .branch("master")),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0")
     ],
     targets: [
         .target(
             name: "DHTSwift",
-            dependencies: ["NIO", "NIOConcurrencyHelpers", "NIOExtras","AsyncKit", "SwiftCLI", "CryptoSwift", "UInt256"]),
+            dependencies: ["NIO", "NIOConcurrencyHelpers", "NIOExtras","AsyncKit", "SwiftCLI", "CryptoSwift", "UInt256", "Logging"]),
         .target(
             name: "DHTSwiftExecutable",
             dependencies: ["DHTSwift"]),

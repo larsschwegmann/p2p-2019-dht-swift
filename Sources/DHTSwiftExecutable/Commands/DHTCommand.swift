@@ -16,25 +16,26 @@ public final class DHTCommand: Command {
             return
         }
 
-        guard let config = try Configuration(filePath: configPath) else {
+        guard var config = try Configuration(filePath: configPath) else {
             fatalError("Loading the config from the config file at \(configPath) failed")
         }
-
-        // Create Event Loop Group for use in APIServer and P2PServer
         
         if let ip = bootstrapKey.value, let port = bootstrapPortKey.value {
-            let chord = Chord(config: config)
-            try chord.bootstrap(bootstrapAddress: SocketAddress.init(ipAddress: ip, port: port)).wait()
-            let apiServer = APIServer(config: config, chord: chord)
-            let p2pServer = P2PServer(config: config, chord: chord)
-            (_,_) = try apiServer.start().and(try p2pServer.start()).wait()
-        } else {
-            let chord = Chord(config: config)
-            try chord.bootstrap().wait() // Move this behind the api/p2p server.start()
-            let apiServer = APIServer(config: config, chord: chord)
-            let p2pServer = P2PServer(config: config, chord: chord)
-            (_, _) = try apiServer.start().and(try p2pServer.start()).wait()
+            config.bootstrapAddress = ip
+            config.bootstrapPort = port
         }
+
+        let chord = Chord(config: config)
+
+        let apiServer = APIServer(config: config, chord: chord)
+        let p2pServer = P2PServer(config: config, chord: chord)
+
+        let apiCloseFuture =  try apiServer.start()
+        let p2pCloseFuture = try p2pServer.start()
+
+        try chord.bootstrap().wait() // Move this behind the api/p2p server.start()
+
+        (_, _) = try apiCloseFuture.and(p2pCloseFuture).wait()
 
     }
 

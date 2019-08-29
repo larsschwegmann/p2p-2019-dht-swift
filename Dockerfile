@@ -10,5 +10,4 @@ FROM swift:slim
 WORKDIR /root
 COPY --from=builder /root .
 
-# TODO: Add commands here
 CMD ["sh", "-c", ".build/x86_64-unknown-linux/release/DHTSwiftExecutable dht-module -c docker_configs/node${NODEID}.conf.ini"]

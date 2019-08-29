@@ -1,7 +1,6 @@
 import Foundation
 import NIO
 import UInt256
-import AsyncKit
 
 // MARK: Chord Error
 
@@ -104,7 +103,7 @@ public final class Chord {
     /**
      Joins an existing Chord network using a known Bootstrap Peer
     */
-    public func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
+    private func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         let current = self.currentAddress
         let currentId = Identifier.socketAddress(address: current)
