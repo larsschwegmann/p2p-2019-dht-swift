@@ -10,4 +10,5 @@ FROM swift:slim
 WORKDIR /root
 COPY --from=builder /root .
 
-CMD ["sh", "-c", ".build/x86_64-unknown-linux/release/DHTSwiftExecutable dht-module -c docker_configs/node${NODEID}.conf.ini"]
+#CMD ["sh", "-c", ".build/x86_64-unknown-linux/release/DHTSwiftExecutable dht-module -c docker_configs/node${NODEID}.conf.ini"]
+CMD ["./startup_delay.sh"]

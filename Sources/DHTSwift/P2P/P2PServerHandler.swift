@@ -146,16 +146,16 @@ final class P2PServerHandler: ChannelInboundHandler {
 
         if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: oldPredecessor)) {
             chord.predecessor.mutate { $0 = predecessorAddress }
-            logger.info("Updated predecessor to \(predecessorAddress)")
+            logger.info("PredecessorNotify: Updated predecessor to \(predecessorAddress)")
         }
 
         if chord.predecessor.value == chord.currentAddress {
             chord.predecessor.mutate { $0 = predecessorAddress }
-            logger.info("Updated predecessor to \(predecessorAddress)")
+            logger.info("PredecessorNotify: Updated predecessor to \(predecessorAddress)")
         }
 
         if chord.successor == chord.currentAddress {
-            logger.info("Updated successor to \(predecessorAddress)")
+            logger.info("PredecessorNotify: Updated successor to \(predecessorAddress)")
             chord.successor = predecessorAddress
         }
         return oldPredecessor

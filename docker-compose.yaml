@@ -4,7 +4,7 @@ services:
     container_name: node1
     build: .
     ports:
-      - "7003-7004"
+      - "7003-7004:7003-7004"
     environment:
       - NODEID=1
     networks:
@@ -14,7 +14,7 @@ services:
     container_name: node2
     build: .
     ports:
-      - "7003-7004"
+      - "7005-7006:7003-7004"
     environment:
       - NODEID=2
     depends_on:
@@ -26,7 +26,7 @@ services:
   #   container_name: node3
   #   build: .
   #   ports:
-  #     - "7003-7004"
+  #     - "7007-7008:7003-7004"
   #   environment:
   #     - NODEID=3
   #   depends_on:
@@ -38,7 +38,7 @@ services:
   #   container_name: node4
   #   build: .
   #   ports:
-  #     - "7003-7004"
+  #     - "7009-7010:7003-7004"
   #   environment:
   #     - NODEID=4
   #   depends_on:

@@ -26,7 +26,7 @@ final class APIServerHandler: ChannelInboundHandler {
         switch message {
         case let get as DHTGet:
             // DHT GET Request
-            logger.info("Got DHT GET request for key \(get.key)")
+            logger.info("Got DHT GET request \(get)")
             for i in 0...UInt8.max {
                 let key = Identifier.Key(rawKey: get.key, replicationIndex: i)
                 let id = Identifier.key(key)
@@ -56,7 +56,7 @@ final class APIServerHandler: ChannelInboundHandler {
                 }
             }
         case let put as DHTPut:
-            logger.info("Got DHT PUT request with key \(put.key) value \(put.value)")
+            logger.info("Got DHT PUT request \(put)")
             for i in 0...put.replication {
                 let key = Identifier.Key(rawKey: put.key, replicationIndex: i)
                 guard let peerFuture = try? self.findPeer(identifier: Identifier.key(key)) else {
