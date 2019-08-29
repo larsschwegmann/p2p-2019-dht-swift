@@ -9,6 +9,8 @@ enum ChordError: LocalizedError {
     case neverBootstrapped
     case unexpectedResponseFromPeer(NetworkMessage)
     case storageFailure(key: UInt256)
+
+    case missingSelf
 }
 
 // MARK: Chord
@@ -102,30 +104,29 @@ public final class Chord {
         let current = self.currentAddress
         let currentId = Identifier.socketAddress(address: current)
         let successorFuture = findPeer(forIdentifier: currentId, peerAddress: bootstrapAddress)
-        let predecessorFuture = notifyPredecessor(address: current, peerAddress: bootstrapAddress)
 
-        predecessorFuture.whenSuccess { [weak self] predecessorAddress in
-            // Update the predecessor address with our predecessor
-            self?.predecessor = predecessorAddress
-        }
-
-        successorFuture.whenSuccess { [weak self] successorAddress in
+        let combined = successorFuture.flatMapThrowing { [weak self] successorAddress -> EventLoopFuture<SocketAddress> in
             // Update the finger table witho ourselves and our successor
             self?.fingerTable = [0: successorAddress]
             guard let ref = self else {
-                return
+                throw ChordError.missingSelf
             }
             for i in 1..<ref.configuration.fingers {
                 ref.fingerTable[i] = ref.currentAddress
             }
+
+            let predecessorFuture = ref.notifyPredecessor(address: current, peerAddress: successorAddress)
+            predecessorFuture.whenSuccess { [weak self] predecessorAddress in
+                // Update the predecessor address with our predecessor
+                self?.predecessor = predecessorAddress
+            }
+            return predecessorFuture
         }
 
-        let loop = self.eventLoopGroup.next()
-        let combined = [predecessorFuture, successorFuture].flatten(on: loop).transform(to: ())
-        return combined.map({ [weak self] _ in
+        return combined.map { [weak self] _ in
             self?.stabilization?.start()
             return ()
-        })
+        }
     }
 
     /**
