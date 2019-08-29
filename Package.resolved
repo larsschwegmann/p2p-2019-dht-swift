@@ -20,6 +20,24 @@
         }
       },
       {
+        "package": "HeliumLogger",
+        "repositoryURL": "https://github.com/IBM-Swift/HeliumLogger.git",
+        "state": {
+          "branch": null,
+          "revision": "146a36c2a91270e4213fa7d7e8192cd2e55d0ace",
+          "version": "1.9.0"
+        }
+      },
+      {
+        "package": "LoggerAPI",
+        "repositoryURL": "https://github.com/IBM-Swift/LoggerAPI.git",
+        "state": {
+          "branch": null,
+          "revision": "3357dd9526cdf9436fa63bb792b669e6efdc43da",
+          "version": "1.9.0"
+        }
+      },
+      {
         "package": "swift-log",
         "repositoryURL": "https://github.com/apple/swift-log.git",
         "state": {

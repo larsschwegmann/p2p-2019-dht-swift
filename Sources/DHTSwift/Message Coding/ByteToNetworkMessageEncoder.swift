@@ -1,9 +1,12 @@
 import Foundation
+import Logging
 import NIO
 
 /// Decodes a ByteBuffer to a NetworkMessage object
 public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
     public typealias InboundOut = NetworkMessage
+
+    private let logger = Logger(label: "ByteToNetworkMessageDecoder")
 
     public mutating func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
         guard buffer.readableBytes >= 4,
@@ -13,7 +16,7 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
         }
 
         guard let messageTypeIDBytes = buffer.getBytes(at: buffer.readerIndex + 2, length: 2) else {
-            print("Can't get messageTypeID bytes")
+            logger.error("Can't get messageTypeID bytes")
             buffer.moveReaderIndex(forwardBy: 4)
             return .continue
         }
@@ -21,7 +24,7 @@ public struct ByteToNetworkMessageDecoder: ByteToMessageDecoder {
         let messageTypeIDRaw = messageTypeIDBytes.withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
 
         guard let messageTypeID = NetworkMessageTypeID.init(rawValue: messageTypeIDRaw) else {
-            print("Unrecognized messageTypeID: \(messageTypeIDRaw)")
+            logger.error("Unrecognized messageTypeID: \(messageTypeIDRaw)")
             buffer.moveReaderIndex(forwardBy: 4)
             return .continue
         }

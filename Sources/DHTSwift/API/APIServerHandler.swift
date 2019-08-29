@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 import UInt256
 
@@ -8,6 +9,8 @@ final class APIServerHandler: ChannelInboundHandler {
 
     private let chord: Chord
 
+    private let logger = Logger(label: "APIServerHandler")
+
     public init(chord: Chord) {
         self.chord = chord
     }
@@ -15,7 +18,7 @@ final class APIServerHandler: ChannelInboundHandler {
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
-        print("APIServer: Client connected from \(context.remoteAddress!)")
+        logger.debug("Client connected from \(context.remoteAddress!)")
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -23,7 +26,7 @@ final class APIServerHandler: ChannelInboundHandler {
         switch message {
         case let get as DHTGet:
             // DHT GET Request
-            print("APIServer: Got DHT GET request for key \(get.key)")
+            logger.info("Got DHT GET request for key \(get.key)")
             for i in 0...UInt8.max {
                 let key = Identifier.Key(rawKey: get.key, replicationIndex: i)
                 let id = Identifier.key(key)
@@ -39,7 +42,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(success) else {
                         fatalError("self is nil")
                     }
-                    print("APIServer: Successfully got \(success)")
+                    self?.logger.info("Successfully got \(success)")
                     context.writeAndFlush(data, promise: nil)
                 }
 
@@ -48,12 +51,12 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(failure) else {
                         fatalError("self is nil")
                     }
-                    print("APIServer: Failed to get \(failure)")
+                    self?.logger.error("Failed to get \(failure)")
                     context.writeAndFlush(data, promise: nil)
                 }
             }
         case let put as DHTPut:
-            print("APIServer: Got DHT PUT request with key \(put.key) value \(put.value)")
+            logger.info("Got DHT PUT request with key \(put.key) value \(put.value)")
             for i in 0...put.replication {
                 let key = Identifier.Key(rawKey: put.key, replicationIndex: i)
                 guard let peerFuture = try? self.findPeer(identifier: Identifier.key(key)) else {
@@ -67,7 +70,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(success) else {
                         fatalError("self is nil")
                     }
-                    print("APIServer: Successfully put \(success)")
+                    self?.logger.info("Successfully put \(success)")
                     context.writeAndFlush(data, promise: nil)
                 }
                 putFuture.whenFailure { [weak self] error in
@@ -75,7 +78,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     guard let data = self?.wrapOutboundOut(failure) else {
                         fatalError("self is nil")
                     }
-                    print("APIServer: Failed to put \(failure)")
+                    self?.logger.error("Failed to put \(failure)")
                     context.writeAndFlush(data, promise: nil)
                 }
             }
@@ -85,11 +88,11 @@ final class APIServerHandler: ChannelInboundHandler {
     }
 
     func channelUnregistered(context: ChannelHandlerContext) {
-        print("APIServer: Connection to client at \(context.remoteAddress!) closed")
+        logger.info("Connection to client at \(context.remoteAddress!) closed")
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("APIServer: Unexpected error: ", error)
+        logger.error("Unexpected error: \(error)")
 
         // As we are not really interested getting notified on success or failure we just pass nil as promise to
         // reduce allocations.

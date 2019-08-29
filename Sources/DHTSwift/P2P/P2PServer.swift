@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 import UInt256
 
@@ -13,6 +14,8 @@ public final class P2PServer {
     public let bootstrap: ServerBootstrap
     private let chord: Chord
     private var channel: Channel?
+
+    private let logger = Logger(label: "P2PServer")
 
     // MARK: Initializers
 
@@ -49,7 +52,7 @@ public final class P2PServer {
     public func start() throws -> EventLoopFuture<Void> {
         let channel = try self.bootstrap.bind(host: configuration.listenAddress, port: configuration.listenPort).wait()
         self.channel = channel
-        print("P2PServer started and listening on \(channel.localAddress!)")
+        logger.info("P2PServer started and listening on \(channel.localAddress!)")
         return channel.closeFuture
     }
 

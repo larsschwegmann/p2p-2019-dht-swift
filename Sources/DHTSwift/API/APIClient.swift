@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 
 // MARK: - APIClient
@@ -10,6 +11,8 @@ public final class APICLient {
     private let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     let address: String
     let port: Int
+
+    private let logger = Logger(label: "APIClient")
 
     // MARK: Initializers
 
@@ -32,6 +35,8 @@ public final class APICLient {
         do {
             let channel = try bootstrap.connect(host: address, port: port).wait()
             print("Connected to host with ip \(address) on port \(port)")
+            let addr = try? SocketAddress(ipAddress: address, port: port)
+            logger.info("Connected to \(addr?.description ?? "nil")")
             try channel.closeFuture.wait()
         } catch let error {
             throw error
@@ -42,10 +47,10 @@ public final class APICLient {
         do {
             try group.syncShutdownGracefully()
         } catch let error {
-            print("Error shutting down \(error.localizedDescription)")
+            logger.error("Error shutting down \(error.localizedDescription)")
             exit(0)
         }
-        print("Client connection closed")
+        logger.info("Client connection closed")
     }
 
     // MARK: - handleGet

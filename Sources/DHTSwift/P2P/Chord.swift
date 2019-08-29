@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 import UInt256
 
@@ -17,16 +18,15 @@ enum ChordError: LocalizedError {
 public final class Chord {
 
     // MARK: Properties
-
-    var keyStore = [UInt256: [UInt8]]()
-    var fingerTable = [Int: SocketAddress]() // Use dict instead of array for safe conditional access
-    var predecessor: SocketAddress?
+    var keyStore = Atomic([UInt256:[UInt8]]())
+    var fingerTable = Atomic([Int: SocketAddress]()) // Use dict instead of array for safe conditional access
+    var predecessor = Atomic<SocketAddress?>(nil)
     var successor: SocketAddress? {
         get {
-            return fingerTable[0]
+            return fingerTable.value[0]
         }
         set {
-            fingerTable[0] = newValue
+            fingerTable.mutate { $0[0] = newValue }
         }
     }
     var currentAddress: SocketAddress {
@@ -37,6 +37,8 @@ public final class Chord {
     private let timeout: TimeAmount
     private let configuration: Configuration
     private var stabilization: Stabilization?
+
+    private let logger = Logger(label: "Chord")
 
     // MARK: Initializers
 
@@ -49,7 +51,7 @@ public final class Chord {
     // MARK: -
 
     func responsibleFor(identifier: Identifier) throws -> Bool {
-        guard let predecessor = self.predecessor else {
+        guard let predecessor = self.predecessor.value else {
             throw ChordError.neverBootstrapped
         }
         let current = self.currentAddress
@@ -59,7 +61,7 @@ public final class Chord {
     }
 
     func responsibleFor(identifier: UInt256) throws -> Bool {
-        guard let predecessor = self.predecessor else {
+        guard let predecessor = self.predecessor.value else {
             throw ChordError.neverBootstrapped
         }
         let current = self.currentAddress
@@ -80,21 +82,23 @@ public final class Chord {
         let currentID = Identifier.socketAddress(address: current)
         let diff = identifier - currentID.hashValue!
         let zeros = diff.leadingZeroBitCount
-        return fingerTable[zeros] ?? self.successor!
+        // TODO: is self.successor always not nil?
+        return fingerTable.value[zeros] ?? self.successor!
     }
 
     // MARK: - Public helper functions
 
     public func bootstrap() throws -> EventLoopFuture<Void> {
+        logger.info("Bootstrapping without any peers, creating new network...")
         if let bootstrapAddress = self.configuration.bootstrapAddress,
             let bootstrapPort = self.configuration.bootstrapPort {
             return try self.bootstrap(bootstrapAddress: SocketAddress(ipAddress: bootstrapAddress, port: bootstrapPort))
         }
         let currentAddress = self.currentAddress
         for i in 0..<self.configuration.fingers {
-            self.fingerTable[i] = currentAddress
+            self.fingerTable.mutate { $0[i] = currentAddress }
         }
-        self.predecessor = currentAddress
+        self.predecessor.mutate { $0 = currentAddress }
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         self.stabilization?.start()
         return self.eventLoopGroup.future()
@@ -104,31 +108,35 @@ public final class Chord {
      Joins an existing Chord network using a known Bootstrap Peer
     */
     private func bootstrap(bootstrapAddress: SocketAddress) -> EventLoopFuture<Void> {
+        logger.info("Starting bootstrap with Peer at \(bootstrapAddress)")
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         let current = self.currentAddress
         let currentId = Identifier.socketAddress(address: current)
         let successorFuture = findPeer(forIdentifier: currentId, peerAddress: bootstrapAddress)
 
         let combined = successorFuture.flatMapThrowing { [weak self] successorAddress -> EventLoopFuture<SocketAddress> in
+            self?.logger.info("Bootstrapping found successor: \(successorAddress)")
             // Update the finger table witho ourselves and our successor
-            self?.fingerTable = [0: successorAddress]
+            self?.fingerTable.mutate { $0 = [0: successorAddress] }
             guard let ref = self else {
                 throw ChordError.missingSelf
             }
             for i in 1..<ref.configuration.fingers {
-                ref.fingerTable[i] = ref.currentAddress
+                ref.fingerTable.mutate { $0[i] = ref.currentAddress }
             }
 
             let predecessorFuture = ref.notifyPredecessor(address: current, peerAddress: successorAddress)
             predecessorFuture.whenSuccess { [weak self] predecessorAddress in
                 // Update the predecessor address with our predecessor
-                self?.predecessor = predecessorAddress
+                self?.predecessor.mutate { $0 = predecessorAddress }
+                self?.logger.info("Bootstrapping found Predecessor: \(predecessorAddress)")
             }
             return predecessorFuture
         }
 
         return combined.map { [weak self] _ in
             self?.stabilization?.start()
+            self?.logger.info("Started Stabilisation")
             return ()
         }
     }

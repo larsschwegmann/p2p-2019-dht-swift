@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 import NIOExtras
 
@@ -10,6 +11,8 @@ final class P2PClient {
 
     let eventLoopGroup: EventLoopGroup
     let bootstrap: ClientBootstrap
+
+    private let logger = Logger(label: "P2PClient")
 
     // MARK: Initalizers
 
@@ -29,20 +32,20 @@ final class P2PClient {
     }
 
     func request(socketAddress: SocketAddress, requestMessage: NetworkMessage) -> EventLoopFuture<NetworkMessage> {
-        print("P2PClient: sending request to \(socketAddress) with message: \(requestMessage)")
+        logger.debug("Sending request to \(socketAddress) with message: \(requestMessage)")
         let channelFuture = bootstrap.connect(to: socketAddress)
         let retFuture = channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
             let promise = channel.eventLoop.makePromise(of: NetworkMessage.self)
-            return channel.pipeline.addHandler(P2PClientHandler(request: requestMessage, promise: promise), name: "P2PClientHandler").flatMap({ _ -> EventLoopFuture<NetworkMessage> in
-                print("P2PClient: Sent request to \(socketAddress) with message: \(requestMessage)")
+            return channel.pipeline.addHandler(P2PClientHandler(request: requestMessage, promise: promise), name: "P2PClientHandler").flatMap({ [weak self] _ -> EventLoopFuture<NetworkMessage> in
+                self?.logger.info("Sent request to \(socketAddress) -> \(requestMessage)")
                 return promise.futureResult
             })
         }
 
         return retFuture.flatMap { message -> EventLoopFuture<NetworkMessage> in
             return channelFuture.flatMap { channel -> EventLoopFuture<NetworkMessage> in
-                return channel.close().map { _ -> NetworkMessage in
-                    print("P2PClient: Got response: \(message) from \(socketAddress), closed request channel")
+                return channel.close().map { [weak self] _ -> NetworkMessage in
+                    self?.logger.info("Got response: \(message) from \(socketAddress), closed request channel")
                     return message
                 }
             }

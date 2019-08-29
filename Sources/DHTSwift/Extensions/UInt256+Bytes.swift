@@ -10,7 +10,7 @@ extension UInt256 {
             let uint64 = bytes[k...(k + 7)].withUnsafeBytes({ $0.load(as: UInt64.self) })
             words.append(uint64)
         }
-        self.init(words)
+        self.init(words.reversed())
     }
 
     /// Returns a byte array of the instance

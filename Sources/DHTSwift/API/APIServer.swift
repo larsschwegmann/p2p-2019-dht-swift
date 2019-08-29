@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 import NIOExtras
 import UInt256
@@ -14,6 +15,8 @@ public final class APIServer {
     public let bootstrap: ServerBootstrap
     private var channel: Channel?
     private let chord: Chord
+
+    private let logger = Logger(label: "APIServer")
 
     // MARK: Initializers
 
@@ -50,7 +53,7 @@ public final class APIServer {
     public func start() throws -> EventLoopFuture<Void> {
         let channel = try self.bootstrap.bind(host: configuration.apiAddress, port: configuration.apiPort).wait()
         self.channel = channel
-        print("APIServer started and listening on \(channel.localAddress!)")
+        logger.info("APIServer started and listening on \(channel.localAddress!)")
         return channel.closeFuture
     }
 

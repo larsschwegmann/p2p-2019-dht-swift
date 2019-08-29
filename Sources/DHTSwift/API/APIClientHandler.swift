@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 import NIO
 
 // MARK: - APIClientHandler
@@ -10,6 +11,7 @@ final class APIClientHandler: ChannelInboundHandler {
     let requestPayload: [UInt8]
 
     private var numBytes = 0
+    private let logger = Logger(label: "APIClientHandler")
 
     init(requestPayload: [UInt8]) {
         self.requestPayload = requestPayload
@@ -24,7 +26,7 @@ final class APIClientHandler: ChannelInboundHandler {
 
         buffer.writeBytes(requestPayload)
         context.writeAndFlush(wrapOutboundOut(buffer), promise: nil)
-        print("Send message to server")
+        logger.info("Sent message to server: \(requestPayload)")
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -32,24 +34,24 @@ final class APIClientHandler: ChannelInboundHandler {
         let readableBytes = buffer.readableBytes
 
         guard let message = buffer.readBytes(length: readableBytes) else {
-            print("[Error]: Could not read bytes")
+            logger.error("Could not read bytes")
             return
         }
 
         if let dhtSuccess = DHTSuccess.fromBytes(message) {
-            print("[Success]: Found value \(dhtSuccess.value) for key \(dhtSuccess.key)")
+            logger.info("Found value \(dhtSuccess.value) for key \(dhtSuccess.key)")
         } else if let dhtFailure = DHTFailure.fromBytes(message) {
-            print("[Error] Could not find value for key \(dhtFailure.key)")
+            logger.error("Could not find value for key \(dhtFailure.key)")
         }
 
         if numBytes == 0 {
-            print("nothing left to read, close the channel")
+            logger.info("nothing left to read, close the channel")
             context.close(promise: nil)
         }
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("error: \(error.localizedDescription)")
+        logger.error("\(error.localizedDescription)")
         context.close(promise: nil)
     }
 }
