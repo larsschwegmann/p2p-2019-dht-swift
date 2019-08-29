@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "790827800d6af12ca6a8b1dca7a9072606fd2a1e",
-          "version": "2.7.0"
+          "revision": "32760eae40e6b7cb81d4d543bb0a9f548356d9a2",
+          "version": "2.7.1"
         }
       },
       {
@@ -42,7 +42,7 @@
         "repositoryURL": "https://github.com/larsschwegmann/SwiftCLI.git",
         "state": {
           "branch": "master",
-          "revision": "3888ffd3ad237c6c6d73df92ef42258af4a90f60",
+          "revision": "dfba334599aa50fa0619f366bcd2c74d3656d3d3",
           "version": null
         }
       },
@@ -51,7 +51,7 @@
         "repositoryURL": "https://github.com/larsschwegmann/UInt256.git",
         "state": {
           "branch": "master",
-          "revision": "3bb1a6d2fa4c55ee90d92f0a2faf494ca2deec45",
+          "revision": "8421c161f20ce72f5566167c3acc3197adb4ecbf",
           "version": null
         }
       }

@@ -22,7 +22,11 @@ enum Identifier {
                 var uint32 = v4.address.sin_addr.s_addr
                 return UInt256(bytes: Array(withUnsafeBytes(of: &uint32, { $0 })).sha256())
             case .v6(let v6):
+                #if os(Linux)
+                var tmp = v6.address.sin6_addr.__in6_u.__u6_addr8
+                #else
                 var tmp = v6.address.sin6_addr.__u6_addr.__u6_addr8
+                #endif
                 let bytes = [UInt8](UnsafeBufferPointer(start: &tmp.0, count: MemoryLayout.size(ofValue: tmp)))
                 return UInt256(bytes: bytes)
             default:
