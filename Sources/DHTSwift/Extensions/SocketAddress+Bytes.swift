@@ -13,7 +13,7 @@ extension SocketAddress {
             let ipv4Addr = in_addr(s_addr: ipv6Bytes[12...15].withUnsafeBytes({ $0.load(as: UInt32.self) }))
             var addr = sockaddr_in()
             addr.sin_family = sa_family_t(AF_INET)
-            addr.sin_port = port
+            addr.sin_port = port.byteSwapped
             addr.sin_addr = ipv4Addr
             self.init(addr, host: "")
         } else {

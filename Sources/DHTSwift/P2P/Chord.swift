@@ -21,14 +21,15 @@ public final class Chord {
     var keyStore = Atomic([UInt256:[UInt8]]())
     var fingerTable = Atomic([Int: SocketAddress]()) // Use dict instead of array for safe conditional access
     var predecessor = Atomic<SocketAddress?>(nil)
-    var successor: SocketAddress? {
-        get {
-            return fingerTable.value[0]
-        }
-        set {
-            fingerTable.mutate { $0[0] = newValue }
-        }
-    }
+//    var successor: SocketAddress? {
+//        get {
+//            return fingerTable.value[0]
+//        }
+//        set {
+//            fingerTable.mutate { $0[0] = newValue }
+//        }
+//    }
+    var successor = Atomic<SocketAddress?>(nil)
     var currentAddress: SocketAddress {
         return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
     }
@@ -87,11 +88,19 @@ public final class Chord {
         let diff = identifier - currentID.hashValue!
         let zeros = diff.leadingZeroBitCount
         // TODO: is self.successor always not nil?
-        logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor?.description ?? "nil")")
+        logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor.value?.description ?? "nil")")
 
-        let responsiblePeer = fingerTable.value[zeros] ?? self.successor!
+        let responsiblePeer = fingerTable.value[zeros] ?? self.successor.value!
         logger.info("Peer at \(responsiblePeer) is responsible")
         return responsiblePeer
+    }
+
+    func setSuccessor(successorAddr: SocketAddress) {
+        self.successor.mutate { $0 = successorAddr }
+        let diff = Identifier.socketAddress(address: self.successor.value!).hashValue! - Identifier.socketAddress(address: self.currentAddress).hashValue!
+        for i in diff.leadingZeroBitCount..<self.fingerTable.value.count {
+            self.fingerTable.mutate { $0[i] = successor.value! }
+        }
     }
 
     // MARK: - Public helper functions
@@ -107,6 +116,8 @@ public final class Chord {
             self.fingerTable.mutate { $0[i] = currentAddress }
         }
         self.predecessor.mutate { $0 = currentAddress }
+        //self.setSuccessor(successorAddr: currentAddress)
+        self.successor.mutate { $0 = currentAddress }
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         self.stabilization?.start()
         return self.eventLoopGroup.future()
@@ -126,6 +137,7 @@ public final class Chord {
             self?.logger.info("Bootstrapping found successor: \(successorAddress)")
             // Update the finger table witho ourselves and our successor
             self?.fingerTable.mutate { $0 = [0: successorAddress] }
+            self?.setSuccessor(successorAddr: successorAddress)
             guard let ref = self else {
                 throw ChordError.missingSelf
             }
@@ -151,6 +163,7 @@ public final class Chord {
 
     /**
      Finds the peer responsible for the given key
+     le
     */
     func findPeer(forIdentifier identifier: Identifier, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
         let hash = identifier.hashValue!

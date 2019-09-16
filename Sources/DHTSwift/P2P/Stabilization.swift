@@ -28,28 +28,38 @@ public final class Stabilization {
 
     private func stabilize() {
         logger.info("Running Stabilization...")
-        guard let updateSuccessorFuture = updateSuccessor(),
-            let updateFingerFuture = updateFingers() else {
-                return
+//        guard let updateSuccessorFuture = updateSuccessor(),
+//            let updateFingerFuture = updateFingers() else {
+//                return
+//        }
+
+//        let loop = self.eventLoopGroup.next()
+//        let combined = [updateSuccessorFuture, updateFingerFuture].flatten(on: loop)
+//        combined.whenSuccess { [weak self] _ in
+//            self?.logger.info("Stabilization successful!")
+//        }
+//
+//        
+//
+
+        let combined = updateSuccessor()!.flatMap { [weak self] _ -> EventLoopFuture<Void> in
+            return self!.updateFingers()!
         }
 
-        let loop = self.eventLoopGroup.next()
-        let combined = [updateSuccessorFuture, updateFingerFuture].flatten(on: loop)
         combined.whenSuccess { [weak self] _ in
             self?.logger.info("Stabilization successful!")
         }
 
-        combined.whenFailure { [weak self] (err) in
+        combined.whenFailure { [weak self] err in
             self?.logger.error("Stabilization error: \(err)")
         }
-
     }
 
     private func updateSuccessor() -> EventLoopFuture<Void>? {
-        logger.info("Upating successor...")
+        logger.info("Updating successor...")
 
         let current = chord.currentAddress
-        guard let successor = chord.successor else {
+        guard let successor = chord.successor.value else {
             return nil
         }
 
@@ -62,7 +72,7 @@ public final class Stabilization {
 
             if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
                 self.logger.info("Updating successor to address \(newSuccessor)")
-                self.chord.successor = newSuccessor
+                self.chord.setSuccessor(successorAddr: successor)
             }
             return ()
         }
@@ -71,7 +81,7 @@ public final class Stabilization {
     private func updateFingers() -> EventLoopFuture<Void>? {
         let current = chord.currentAddress
         let fingers = chord.fingerTable
-        guard let successor = chord.successor else {
+        guard let successor = chord.successor.value else {
             return nil
         }
 
@@ -79,6 +89,7 @@ public final class Stabilization {
 
         let loop = self.eventLoopGroup.next()
 
+        // TODO: Make this respect the order of the fingertable, one after the other
         return fingers.value.map { (key, value) -> EventLoopFuture<Void> in
             // TODO: Fix this, identifier is always the same value for some reason
             let shiftedKey = UInt256(UInt256(1) << UInt256(UInt256(255) - UInt256(key)))
