@@ -24,4 +24,10 @@ extension UInt256 {
         }
         return bytes
     }
+
+    func isBetween(lhs: UInt256, rhs: UInt256) -> Bool {
+        let (diff1, _) = rhs.subtractingReportingOverflow(self)
+        let (diff2, _) = lhs.subtractingReportingOverflow(lhs)
+        return diff1 < diff2
+    }
 }

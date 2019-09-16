@@ -41,9 +41,7 @@ enum Identifier {
     }
 
     func isBetween(lhs: Identifier, rhs: Identifier) -> Bool {
-        let (diff1, _) = rhs.hashValue!.subtractingReportingOverflow(self.hashValue!)
-        let (diff2, _) = lhs.hashValue!.subtractingReportingOverflow(lhs.hashValue!)
-        return diff1 < diff2
+        return self.hashValue!.isBetween(lhs: lhs.hashValue!, rhs: rhs.hashValue!)
     }
 }
 
