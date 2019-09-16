@@ -68,7 +68,7 @@ public final class Chord {
         let current = self.currentAddress
         let preID = Identifier.socketAddress(address: predecessor)
         let currentID = Identifier.socketAddress(address: current)
-        return preID.hashValue! < identifier && identifier <= currentID.hashValue!
+        return identifier.isBetween(lhs: preID.hashValue!, rhs: currentID.hashValue!)
     }
 
     func closestPeer(identifier: Identifier) throws -> SocketAddress {
