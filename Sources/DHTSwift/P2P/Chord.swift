@@ -57,7 +57,8 @@ public final class Chord {
         let current = self.currentAddress
         let preID = Identifier.socketAddress(address: predecessor)
         let currentID = Identifier.socketAddress(address: current)
-        return preID < identifier && identifier <= currentID
+//        return preID < identifier && identifier <= currentID
+        return identifier.isBetween(lhs: preID, rhs: currentID)
     }
 
     func responsibleFor(identifier: UInt256) throws -> Bool {
@@ -79,7 +80,7 @@ public final class Chord {
             logger.info("I am responsible for key \(identifier)")
             return self.currentAddress
         }
-        logger.info("I am not resposible for key \(identifier)")
+        logger.info("I am not responsible for key \(identifier)")
 //        logger.info("My finger table: \(fingerTable.value)")
         let current = self.currentAddress
         let currentID = Identifier.socketAddress(address: current)
@@ -87,7 +88,10 @@ public final class Chord {
         let zeros = diff.leadingZeroBitCount
         // TODO: is self.successor always not nil?
         logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor?.description ?? "nil")")
-        return fingerTable.value[zeros] ?? self.successor!
+
+        let responsiblePeer = fingerTable.value[zeros] ?? self.successor!
+        logger.info("Peer at \(responsiblePeer) is responsible")
+        return responsiblePeer
     }
 
     // MARK: - Public helper functions
