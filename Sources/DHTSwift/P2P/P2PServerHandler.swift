@@ -136,7 +136,7 @@ final class P2PServerHandler: ChannelInboundHandler {
             chord.keyStore.mutate { $0[hashedKey] = value }
 
             logger.info("Stored value for key \(hashedKey), replying with STORAGE PUT SUCCESS")
-            let storageGetSuccess = P2PStorageGetSuccess(key: hashedKey, value: value)
+            let storageGetSuccess = P2PStoragePutSuccess(key: rawKey)
             context.writeAndFlush(wrapOutboundOut(storageGetSuccess), promise: nil)
         }
     }
