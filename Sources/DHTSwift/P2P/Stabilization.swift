@@ -91,7 +91,6 @@ public final class Stabilization {
 
         // TODO: Make this respect the order of the fingertable, one after the other
         return fingers.value.map { (key, value) -> EventLoopFuture<Void> in
-            // TODO: Fix this, identifier is always the same value for some reason
             let shiftedKey = UInt256(UInt256(1) << UInt256(UInt256(255) - UInt256(key)))
             let identifier = Identifier.socketAddress(address: current) + Identifier.existingHash(shiftedKey)
             return chord.findPeer(forIdentifier: identifier, peerAddress: successor).map({ peerAddress in

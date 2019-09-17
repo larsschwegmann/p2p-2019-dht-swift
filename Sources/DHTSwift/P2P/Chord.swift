@@ -11,6 +11,8 @@ enum ChordError: LocalizedError {
     case storageFailure(key: UInt256)
 
     case missingSelf
+
+    case unknownError
 }
 
 // MARK: Chord
@@ -21,14 +23,6 @@ public final class Chord {
     var keyStore = Atomic([UInt256:[UInt8]]())
     var fingerTable = Atomic([Int: SocketAddress]()) // Use dict instead of array for safe conditional access
     var predecessor = Atomic<SocketAddress?>(nil)
-//    var successor: SocketAddress? {
-//        get {
-//            return fingerTable.value[0]
-//        }
-//        set {
-//            fingerTable.mutate { $0[0] = newValue }
-//        }
-//    }
     var successor = Atomic<SocketAddress?>(nil)
     var currentAddress: SocketAddress {
         return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
@@ -168,15 +162,32 @@ public final class Chord {
     func findPeer(forIdentifier identifier: Identifier, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
         let hash = identifier.hashValue!
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
-        let message = P2PPeerFind(key: hash)
-        return client.request(socketAddress: peerAddress, requestMessage: message).flatMapThrowing { response -> SocketAddress in
+
+        let reqFactory: ((SocketAddress) -> EventLoopFuture<NetworkMessage>) = { sockAddr in
+            let message = P2PPeerFind(key: hash)
+            return client.request(socketAddress: sockAddr, requestMessage: message)
+        }
+
+        var peerAddress = peerAddress
+
+        func responseHandler(response: NetworkMessage) -> EventLoopFuture<SocketAddress> {
             switch response {
             case let peerFound as P2PPeerFound:
-                return try SocketAddress(ipv6Bytes: peerFound.ipAddr, port: peerFound.port)
+                guard let addr = try? SocketAddress.init(ipv6Bytes: peerFound.ipAddr, port: peerFound.port) else {
+                    return self.eventLoopGroup.future(error: ChordError.unknownError)
+                }
+                if addr == peerAddress {
+                    return self.eventLoopGroup.future(addr)
+                } else {
+                    peerAddress = addr
+                    return reqFactory(peerAddress).flatMap(responseHandler)
+                }
             default:
-                throw ChordError.unexpectedResponseFromPeer(response)
+                return self.eventLoopGroup.future(error: ChordError.unexpectedResponseFromPeer(response))
             }
         }
+
+        return reqFactory(peerAddress).flatMap(responseHandler)
     }
 
     func getValue(key: Identifier.Key, peerAddress: SocketAddress) -> EventLoopFuture<[UInt8]> {
