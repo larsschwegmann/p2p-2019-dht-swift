@@ -18,7 +18,7 @@ final class APIServerHandler: ChannelInboundHandler {
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
-        logger.debug("Client connected from \(context.remoteAddress!)")
+        //logger.debug("Client connected from \(context.remoteAddress!)")
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -27,7 +27,8 @@ final class APIServerHandler: ChannelInboundHandler {
         case let get as DHTGet:
             // DHT GET Request
             logger.info("Got DHT GET request \(get)")
-            for i in 0...UInt8.max {
+            // TODO change the limit here
+            for i in 0...UInt8(1) {
                 let key = Identifier.Key(rawKey: get.key, replicationIndex: i)
                 let id = Identifier.key(key)
                 guard let peerFuture = try? self.findPeer(identifier: id) else {
@@ -44,6 +45,7 @@ final class APIServerHandler: ChannelInboundHandler {
                     }
                     self?.logger.info("Successfully got \(success)")
                     context.writeAndFlush(data, promise: nil)
+                    context.close(promise: nil)
                 }
 
                 getFuture.whenFailure { [weak self] error in
@@ -88,7 +90,7 @@ final class APIServerHandler: ChannelInboundHandler {
     }
 
     func channelUnregistered(context: ChannelHandlerContext) {
-        logger.info("Connection to client at \(context.remoteAddress!) closed")
+        //logger.info("Connection to client at \(context.remoteAddress!) closed")
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {

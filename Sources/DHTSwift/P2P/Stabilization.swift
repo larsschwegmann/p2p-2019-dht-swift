@@ -28,19 +28,6 @@ public final class Stabilization {
 
     private func stabilize() {
         logger.info("Running Stabilization...")
-//        guard let updateSuccessorFuture = updateSuccessor(),
-//            let updateFingerFuture = updateFingers() else {
-//                return
-//        }
-
-//        let loop = self.eventLoopGroup.next()
-//        let combined = [updateSuccessorFuture, updateFingerFuture].flatten(on: loop)
-//        combined.whenSuccess { [weak self] _ in
-//            self?.logger.info("Stabilization successful!")
-//        }
-//
-//        
-//
 
         let combined = updateSuccessor()!.flatMap { [weak self] _ -> EventLoopFuture<Void> in
             return self!.updateFingers()!

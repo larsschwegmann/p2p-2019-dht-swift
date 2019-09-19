@@ -72,20 +72,20 @@ public final class Chord {
 
     func closestPeer(identifier: UInt256) throws -> SocketAddress {
         if try self.responsibleFor(identifier: identifier) {
-            logger.info("I am responsible for key \(identifier)")
+            //logger.info("I am responsible for key \(identifier)")
             return self.currentAddress
         }
-        logger.info("I am not responsible for key \(identifier)")
+        //logger.info("I am not responsible for key \(identifier)")
 //        logger.info("My finger table: \(fingerTable.value)")
         let current = self.currentAddress
         let currentID = Identifier.socketAddress(address: current)
         let diff = identifier - currentID.hashValue!
         let zeros = diff.leadingZeroBitCount
         // TODO: is self.successor always not nil?
-        logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor.value?.description ?? "nil")")
+        //logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor.value?.description ?? "nil")")
 
         let responsiblePeer = fingerTable.value[zeros] ?? self.successor.value!
-        logger.info("Peer at \(responsiblePeer) is responsible")
+        //logger.info("Peer at \(responsiblePeer) is responsible")
         return responsiblePeer
     }
 

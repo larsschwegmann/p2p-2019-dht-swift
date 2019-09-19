@@ -18,7 +18,7 @@ final class P2PServerHandler: ChannelInboundHandler {
     // MARK: ChannelInboundHandler protocol functions
 
     public func channelActive(context: ChannelHandlerContext) {
-        logger.info("Client connected from \(context.remoteAddress!)")
+        //logger.info("Client connected from \(context.remoteAddress!)")
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -60,7 +60,7 @@ final class P2PServerHandler: ChannelInboundHandler {
     }
 
     func channelUnregistered(context: ChannelHandlerContext) {
-        logger.info("Connection to client at \(context.remoteAddress!) closed")
+        //logger.info("Connection to client at \(context.remoteAddress!) closed")
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
