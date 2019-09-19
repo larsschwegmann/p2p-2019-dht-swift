@@ -72,7 +72,7 @@ public final class Stabilization {
 
             if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
                 self.logger.info("Updating successor to address \(newSuccessor)")
-                self.chord.setSuccessor(successorAddr: successor)
+                self.chord.setSuccessor(successorAddr: newSuccessor)
             }
             return ()
         }
