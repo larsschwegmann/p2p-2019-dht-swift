@@ -52,18 +52,11 @@ public final class Chord {
         let current = self.currentAddress
         let preID = Identifier.socketAddress(address: predecessor)
         let currentID = Identifier.socketAddress(address: current)
-//        return preID < identifier && identifier <= currentID
         return identifier.isBetween(lhs: preID, rhs: currentID)
     }
 
     func responsibleFor(identifier: UInt256) throws -> Bool {
-        guard let predecessor = self.predecessor.value else {
-            throw ChordError.neverBootstrapped
-        }
-        let current = self.currentAddress
-        let preID = Identifier.socketAddress(address: predecessor)
-        let currentID = Identifier.socketAddress(address: current)
-        return identifier.isBetween(lhs: preID.hashValue!, rhs: currentID.hashValue!)
+        return try responsibleFor(identifier: Identifier.existingHash(identifier))
     }
 
     func closestPeer(identifier: Identifier) throws -> SocketAddress {
@@ -100,11 +93,11 @@ public final class Chord {
     // MARK: - Public helper functions
 
     public func bootstrap() throws -> EventLoopFuture<Void> {
-        logger.info("Bootstrapping without any peers, creating new network...")
         if let bootstrapAddress = self.configuration.bootstrapAddress,
             let bootstrapPort = self.configuration.bootstrapPort {
             return try self.bootstrap(bootstrapAddress: SocketAddress(ipAddress: bootstrapAddress, port: bootstrapPort))
         }
+        logger.info("Bootstrapping without any peers, creating new network...")
         let currentAddress = self.currentAddress
         for i in 0..<self.configuration.fingers {
             self.fingerTable.mutate { $0[i] = currentAddress }
