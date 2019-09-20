@@ -144,7 +144,7 @@ final class P2PServerHandler: ChannelInboundHandler {
     private func notifyPredecessor(predecessorAddress: SocketAddress) -> SocketAddress {
         let oldPredecessor = chord.predecessor.value!
 
-        if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: oldPredecessor)) {
+        if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: predecessorAddress)) {
             chord.predecessor.mutate { $0 = predecessorAddress }
             logger.info("PredecessorNotify: Updated predecessor to \(predecessorAddress)")
         }
