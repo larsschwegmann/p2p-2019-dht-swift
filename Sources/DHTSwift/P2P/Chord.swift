@@ -10,6 +10,8 @@ enum ChordError: LocalizedError {
     case unexpectedResponseFromPeer(NetworkMessage)
     case storageFailure(key: UInt256)
 
+    case deadPeer(SocketAddress)
+
     case missingSelf
 
     case unknownError
@@ -189,10 +191,12 @@ public final class Chord {
     /**
             Returns an array of successors of a peer
         */
-    func getSuccessors(peerAddress: SocketAddress) -> EventLoopFuture<[SocketAddress]> {
+    func getSuccessors(peerAddress: SocketAddress) -> EventLoopFuture<Result<[SocketAddress], ChordError>> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let successorsMessageRequest = P2PSuccessorRequest()
-        return client.request(socketAddress: peerAddress, requestMessage: successorsMessageRequest).flatMapThrowing({ response -> [SocketAddress] in
+        let bla = client.request(socketAddress: peerAddress, requestMessage: successorsMessageRequest).recover({ (err) -> NetworkMessage in
+            return P2PDeadConnectionReply(peerAddress: peerAddress)
+        }).map({ response -> Result<[SocketAddress], ChordError> in
             switch response {
             case let reply as P2PSuccessorReply:
                 var successors = reply.successors
@@ -203,11 +207,15 @@ public final class Chord {
                         successors.remove(at: 0)
                     }
                 }
-                return successors.count > 4 ? Array(successors[0..<4]) : successors
+                return .success(successors.count > 4 ? Array(successors[0..<4]) : successors)
+            case let reply as P2PDeadConnectionReply:
+                return .failure(ChordError.deadPeer(reply.peerAddress))
             default:
-                throw ChordError.unexpectedResponseFromPeer(response)
+                return .failure(ChordError.unexpectedResponseFromPeer(response))
             }
         })
+
+        return bla
     }
 
     func getValue(key: Identifier.Key, peerAddress: SocketAddress) -> EventLoopFuture<[UInt8]> {

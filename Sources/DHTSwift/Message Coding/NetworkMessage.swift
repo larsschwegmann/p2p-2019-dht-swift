@@ -25,6 +25,7 @@ public enum NetworkMessageTypeID: UInt16 {
     case P2PSuccessorReplyID        = 1081
     case P2PPingRequestID           = 1082
     case P2PPongReplyID             = 1083
+    case P2PDeadConnectionReplyID   = 1084 // Pseudo
 
     func getType() -> NetworkMessage.Type {
         switch self {
@@ -62,6 +63,8 @@ public enum NetworkMessageTypeID: UInt16 {
             return P2PPingRequest.self
         case .P2PPongReplyID:
             return P2PPongReply.self
+        case .P2PDeadConnectionReplyID:
+            return P2PDeadConnectionReply.self
         }
     }
 }

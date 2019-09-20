@@ -389,3 +389,25 @@ struct P2PPongReply: NetworkMessage {
     init?(serializedBodyBytes: [UInt8]) { }
     init() { }
 }
+
+// MARK: - P2PDeadConnectionReply
+
+struct P2PDeadConnectionReply: NetworkMessage {
+    static let messageTypeID: NetworkMessageTypeID = .P2PDeadConnectionReplyID
+
+    let peerAddress: SocketAddress
+
+    var serializedBody: [UInt8] {
+        return peerAddress.getIPv6BytesIncludingPort() ?? []
+    }
+
+    init(peerAddress: SocketAddress) {
+        self.peerAddress = peerAddress
+    }
+
+    init?(serializedBodyBytes: [UInt8]) {
+        self.peerAddress = try! SocketAddress(ipv6BytesIncludingPort: serializedBodyBytes)
+    }
+
+
+}

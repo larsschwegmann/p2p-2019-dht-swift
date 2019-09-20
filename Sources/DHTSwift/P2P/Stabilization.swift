@@ -50,20 +50,31 @@ public final class Stabilization {
             return nil
         }
 
-        let successorFutures = chord.successors.value.map { succ -> EventLoopFuture<[SocketAddress]> in
+        let successorFutures = chord.successors.value.map { succ -> EventLoopFuture<Result<[SocketAddress], ChordError>> in
             return chord.getSuccessors(peerAddress: succ)
         }
 
         let futuresFlattened = EventLoopFuture.whenAllComplete(successorFutures, on: self.eventLoopGroup.next()).flatMapThrowing { results -> [SocketAddress] in
-            let successors = results.flatMap({ [weak self] result -> [SocketAddress] in
+            var blacklist = Set<SocketAddress>()
+            var successors = results.flatMap({ [weak self] result -> [SocketAddress] in
                 switch result {
-                case .success(let successorAddresses):
-                    return successorAddresses
+                case .success(let nested):
+                    switch nested {
+                    case .success(let successorAddresses):
+                        return successorAddresses
+                    case .failure(let reason):
+                        if case ChordError.deadPeer(let peerAddress) = reason {
+                            blacklist.insert(peerAddress)
+                        }
+                        return []
+                    }
                 case .failure(let error):
                     self?.logger.error("Error while trying to request successors: \(error)")
                     return []
                 }
             })
+            successors = successors.filter { !blacklist.contains($0) }
+
             self.chord.setSuccessors(successorAddr: successors.uniques)
             return successors
         }.flatMap { successors -> EventLoopFuture<Void> in
