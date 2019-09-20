@@ -48,10 +48,18 @@ final class P2PServerHandler: ChannelInboundHandler {
             handleStorageGet(storageGet: storageGet, context: context)
         case let storagePut as P2PStoragePut:
             handleStoragePut(storagePut: storagePut, context: context)
+        case _ as P2PSuccessorRequest:
+            var successors = [SocketAddress]()
+            if let predecessorAddr = chord.predecessor.value {
+                successors.append(predecessorAddr)
+            }
+            successors.append(chord.currentAddress)
+            successors.append(contentsOf: chord.successors.value)
+            let reply = P2PSuccessorReply(successors: successors)
+            context.writeAndFlush(wrapOutboundOut(reply), promise: nil)
         default:
             logger.error("Got unexpected message \(message)")
             context.close(promise: nil)
-            return
         }
     }
 
