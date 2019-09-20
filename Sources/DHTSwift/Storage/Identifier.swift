@@ -43,6 +43,10 @@ public enum Identifier {
     public func isBetween(lhs: Identifier, rhs: Identifier) -> Bool {
         return self.hashValue!.isBetween(lhs: lhs.hashValue!, rhs: rhs.hashValue!)
     }
+
+    public func isBetweenEnd(lhs: Identifier, rhs: Identifier) -> Bool {
+        return self.hashValue!.isBetweenEnd(lhs: lhs.hashValue!, rhs: rhs.hashValue!)
+    }
 }
 
 extension Identifier: Comparable {

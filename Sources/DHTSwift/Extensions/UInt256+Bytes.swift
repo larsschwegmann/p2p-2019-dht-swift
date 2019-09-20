@@ -30,4 +30,8 @@ extension UInt256 {
         let (diff2, _) = rhs.subtractingReportingOverflow(lhs)
         return diff1 < diff2
     }
+
+    func isBetweenEnd(lhs: UInt256, rhs: UInt256) -> Bool {
+        return self == rhs || self.isBetween(lhs: lhs, rhs: rhs)
+    }
 }

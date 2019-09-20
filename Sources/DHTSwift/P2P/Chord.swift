@@ -83,8 +83,8 @@ public final class Chord {
         return responsiblePeer
     }
 
-    func setSuccessor(successorAddr: SocketAddress) {
-        self.successors.mutate { $0[0] = successorAddr }
+    func setSuccessors(successorAddr: [SocketAddress]) {
+        self.successors.mutate { $0 = successorAddr }
         let diff = Identifier.socketAddress(address: self.successors.value[0]).hashValue! - Identifier.socketAddress(address: self.currentAddress).hashValue!
         for i in diff.leadingZeroBitCount..<self.fingerTable.value.count {
             self.fingerTable.mutate { $0[i] = successors.value[0] }
@@ -184,6 +184,30 @@ public final class Chord {
         }
 
         return reqFactory(peerAddress).flatMap(responseHandler)
+    }
+
+    /**
+            Returns an array of successors of a peer
+        */
+    func getSuccessors(peerAddress: SocketAddress) -> EventLoopFuture<[SocketAddress]> {
+        let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
+        let successorsMessageRequest = P2PSuccessorRequest()
+        return client.request(socketAddress: peerAddress, requestMessage: successorsMessageRequest).flatMapThrowing({ response -> [SocketAddress] in
+            switch response {
+            case let reply as P2PSuccessorReply:
+                var successors = reply.successors
+                if let first = successors.first {
+                    let currentID = Identifier.socketAddress(address: self.currentAddress)
+                    let peerID = Identifier.socketAddress(address: peerAddress)
+                    if !Identifier.socketAddress(address: first).isBetweenEnd(lhs: currentID, rhs: peerID) {
+                        successors.remove(at: 0)
+                    }
+                }
+                return successors.count > 4 ? Array(successors[0..<4]) : successors
+            default:
+                throw ChordError.unexpectedResponseFromPeer(response)
+            }
+        })
     }
 
     func getValue(key: Identifier.Key, peerAddress: SocketAddress) -> EventLoopFuture<[UInt8]> {

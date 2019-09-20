@@ -338,6 +338,7 @@ struct P2PSuccessorRequest: NetworkMessage {
 
     let serializedBody: [UInt8] = []
 
+    init() { }
     init?(serializedBodyBytes: [UInt8]) { }
 }
 

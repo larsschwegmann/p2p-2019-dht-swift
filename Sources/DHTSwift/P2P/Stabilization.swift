@@ -29,7 +29,7 @@ public final class Stabilization {
     private func stabilize() {
         logger.info("Running Stabilization...")
 
-        let combined = updateSuccessor()!.flatMap { [weak self] _ -> EventLoopFuture<Void> in
+        let combined = updateSuccessors()!.flatMap { [weak self] _ -> EventLoopFuture<Void> in
             return self!.updateFingers()!
         }
 
@@ -42,27 +42,46 @@ public final class Stabilization {
         }
     }
 
-    private func updateSuccessor() -> EventLoopFuture<Void>? {
-        logger.info("Updating successor...")
+    private func updateSuccessors() -> EventLoopFuture<Void>? {
+        logger.info("Updating successors...")
 
         let current = chord.currentAddress
         guard let successor = chord.successors.value[safe: 0] else {
             return nil
         }
 
-        logger.info("Calling NOTIFY PREDECESSOR on \(successor)")
-
-        return chord.notifyPredecessor(address: current, peerAddress: successor).map { newSuccessor in
-            let currentId = Identifier.socketAddress(address: current)
-            let successorId = Identifier.socketAddress(address: successor)
-            let newSuccessorId = Identifier.socketAddress(address: newSuccessor)
-
-            if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
-                self.logger.info("Updating successor to address \(newSuccessor)")
-                self.chord.setSuccessor(successorAddr: newSuccessor)
-            }
-            return ()
+        let successorFutures = chord.successors.value.map { succ -> EventLoopFuture<[SocketAddress]> in
+            return chord.getSuccessors(peerAddress: succ)
         }
+
+        let futuresFlattened = EventLoopFuture.whenAllComplete(successorFutures, on: self.eventLoopGroup.next()).flatMapThrowing { results -> [SocketAddress] in
+            let successors = results.flatMap({ [weak self] result -> [SocketAddress] in
+                switch result {
+                case .success(let successorAddresses):
+                    return successorAddresses
+                case .failure(let error):
+                    self?.logger.error("Error while trying to request successors: \(error)")
+                    return []
+                }
+            })
+            self.chord.setSuccessors(successorAddr: successors)
+            return successors
+        }.flatMap { successors -> EventLoopFuture<Void> in
+            self.logger.info("Calling NOTIFY PREDECESSOR on \(successor)")
+            return self.chord.notifyPredecessor(address: current, peerAddress: successors[0]).transform(to: ())
+        }
+//            .map { _ in
+//            let currentId = Identifier.socketAddress(address: current)
+//            let successorId = Identifier.socketAddress(address: successor)
+//            let newSuccessorId = Identifier.socketAddress(address: newSuccessor)
+//
+//            if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
+//                self.logger.info("Updating successor to address \(newSuccessor)")
+//                self.chord.setSuccessor(successorAddr: newSuccessor)
+//            }
+//        }
+
+        return futuresFlattened
     }
 
     private func updateFingers() -> EventLoopFuture<Void>? {

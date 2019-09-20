@@ -155,10 +155,10 @@ final class P2PServerHandler: ChannelInboundHandler {
             logger.info("PredecessorNotify: Updated predecessor to \(predecessorAddress)")
         }
 
-        if chord.successors.value[0] == chord.currentAddress && predecessorAddress != chord.currentAddress {
-            logger.info("PredecessorNotify: Updated successor to \(predecessorAddress)")
-            chord.setSuccessor(successorAddr: predecessorAddress)
-        }
+//        if chord.successors.value[0] == chord.currentAddress && predecessorAddress != chord.currentAddress {
+//            logger.info("PredecessorNotify: Updated successor to \(predecessorAddress)")
+//            chord.setSuccessor(successorAddr: predecessorAddress)
+//        }
         return oldPredecessor
     }
 }
