@@ -29,6 +29,7 @@ public final class Chord {
     var currentAddress: SocketAddress {
         return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
     }
+    let maxReplicationIndex: UInt8
 
     private var eventLoopGroup: EventLoopGroup
     private let timeout: TimeAmount
@@ -43,6 +44,7 @@ public final class Chord {
         self.configuration = config
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.timeout = timeout
+        self.maxReplicationIndex = config.maxReplicationIndex
     }
 
     // MARK: -
@@ -121,9 +123,6 @@ public final class Chord {
 
         let combined = successorFuture.flatMapThrowing { [weak self] successorAddress -> EventLoopFuture<SocketAddress> in
             self?.logger.info("Bootstrapping found successor: \(successorAddress)")
-            // Update the finger table witho ourselves and our successor
-            //self?.fingerTable.mutate { $0 = [0: successorAddress] }
-            //self?.setSuccessor(successorAddr: successorAddress)
             self?.successors.mutate { $0[safe: 0] = successorAddress }
             guard let ref = self else {
                 throw ChordError.missingSelf
@@ -190,7 +189,7 @@ public final class Chord {
     func getSuccessors(peerAddress: SocketAddress) -> EventLoopFuture<Result<[SocketAddress], ChordError>> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let successorsMessageRequest = P2PSuccessorRequest()
-        let bla = client.request(socketAddress: peerAddress, requestMessage: successorsMessageRequest).recover({ (err) -> NetworkMessage in
+        return client.request(socketAddress: peerAddress, requestMessage: successorsMessageRequest).recover({ _ -> NetworkMessage in
             return P2PDeadConnectionReply(peerAddress: peerAddress)
         }).map({ response -> Result<[SocketAddress], ChordError> in
             switch response {
@@ -210,8 +209,6 @@ public final class Chord {
                 return .failure(ChordError.unexpectedResponseFromPeer(response))
             }
         })
-
-        return bla
     }
 
     func getValue(key: Identifier.Key, peerAddress: SocketAddress) -> EventLoopFuture<[UInt8]> {

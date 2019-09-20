@@ -40,6 +40,7 @@ public struct Configuration {
         static let fingers = "fingers"
         static let stabilizationInterval = "stabilization_interval"
         static let bootstrapAddress = "bootstrap_address"
+        static let maxReplicationIndex = "max_replication_index"
     }
 
     // MARK: Configuration Properties
@@ -51,9 +52,10 @@ public struct Configuration {
     public var workerThreads: Int = 4
     public var timeout: Int = 300000
     public var fingers: Int = 128
-    public var stabilizationInterval: Int = 60
+    public var stabilizationInterval: Int = 30
     public var bootstrapAddress: String?
     public var bootstrapPort: Int?
+    public var maxReplicationIndex: UInt8 = 4
 
     // MARK: Initializers
 
@@ -107,6 +109,11 @@ public struct Configuration {
             let (bootstrapAddress, bootstrapPort) = try Configuration.parseInetAddress(bootstrapAddressString)
             self.bootstrapAddress = bootstrapAddress
             self.bootstrapPort = bootstrapPort
+        }
+
+        if let maxReplicationString = dhtConfig[ConfigKey.maxReplicationIndex],
+            let maxReplication = UInt8(maxReplicationString) {
+            self.maxReplicationIndex = maxReplication
         }
     }
 

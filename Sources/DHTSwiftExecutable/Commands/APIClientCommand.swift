@@ -22,7 +22,7 @@ final class APIClientGetCommand: Command {
         stdout <<< String(key.value)
 
         if let host = host.value, let port = port.value {
-            let apiClient = APICLient(address: host, port: port)
+            let apiClient = APICLient(address: host, port: port, maxReplication: 4)
             let getRequestMessage = apiClient.handleGet(with: key.value)
             do {
                 try apiClient.start(payload: getRequestMessage)
@@ -41,7 +41,7 @@ final class APIClientGetCommand: Command {
             }
 
             stdout <<< config.apiAddress
-            let apiClient = APICLient(address: config.apiAddress, port: config.apiPort)
+            let apiClient = APICLient(address: config.apiAddress, port: config.apiPort, maxReplication: config.maxReplicationIndex)
             let getRequestMessage = apiClient.handleGet(with: key.value)
             do {
                 try apiClient.start(payload: getRequestMessage)
@@ -69,7 +69,7 @@ final class APIClientPutCommand: Command {
         stdout <<< String(key.value) + String(value.value)
 
         if let host = host.value, let port = port.value {
-            let apiClient = APICLient(address: host, port: port)
+            let apiClient = APICLient(address: host, port: port, maxReplication: 4)
             let putRequestMessage = apiClient.handlePut(with: key.value, value: value.value)
             do {
                 try apiClient.start(payload: putRequestMessage)
@@ -87,7 +87,7 @@ final class APIClientPutCommand: Command {
                 fatalError("Loading the config from the config file at \(configPath) failed")
             }
             stdout <<< config.apiAddress
-            let apiClient = APICLient(address: config.apiAddress, port: config.apiPort)
+            let apiClient = APICLient(address: config.apiAddress, port: config.apiPort, maxReplication: config.maxReplicationIndex)
             let putRequestMessage = apiClient.handlePut(with: key.value, value: value.value)
             do {
                 try apiClient.start(payload: putRequestMessage)

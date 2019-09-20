@@ -11,14 +11,16 @@ public final class APICLient {
     private let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     let address: String
     let port: Int
+    let maxReplication: UInt8
 
     private let logger = Logger(label: "APIClient")
 
     // MARK: Initializers
 
-    public init(address: String, port: Int) {
+    public init(address: String, port: Int, maxReplication: UInt8) {
         self.address = address
         self.port = port
+        self.maxReplication = maxReplication
     }
 
     // MARK: Public functions
@@ -61,7 +63,7 @@ public final class APICLient {
 
     // MARK: - handlePut
     public func handlePut(with key: String, value: String) -> [UInt8] {
-        let dhtPut = DHTPut(ttl: 60, replication: 1, key: key.toByteArray(cut: 32), value: value.toByteArray(cut: value.utf8.count))
+        let dhtPut = DHTPut(ttl: 60, replication: UInt8(self.maxReplication), key: key.toByteArray(cut: 32), value: value.toByteArray(cut: value.utf8.count))
         return dhtPut.getBytes()
     }
 }

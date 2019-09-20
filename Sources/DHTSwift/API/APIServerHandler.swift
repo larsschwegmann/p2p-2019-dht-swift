@@ -28,7 +28,7 @@ final class APIServerHandler: ChannelInboundHandler {
             // DHT GET Request
             logger.info("Got DHT GET request \(get)")
             // TODO change the limit here
-            for i in 0...UInt8(1) {
+            for i in 0...chord.maxReplicationIndex {
                 let key = Identifier.Key(rawKey: get.key, replicationIndex: i)
                 let id = Identifier.key(key)
                 guard let peerFuture = try? self.findPeer(identifier: id) else {
