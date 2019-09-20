@@ -34,7 +34,7 @@ public final class Stabilization {
         }
 
         combined.whenSuccess { [weak self] _ in
-            self?.logger.info("Stabilization successful! Successors: \(self?.chord.successors.value.map { $0?.description ?? "nil" }.description ?? "nil"), Predecessor: \(self?.chord.predecessor.value?.description ?? "nil")")
+            self?.logger.info("Stabilization successful! Successors: \(self?.chord.successors.value.map { $0.description }.description ?? "nil"), Predecessor: \(self?.chord.predecessor.value?.description ?? "nil")")
         }
 
         combined.whenFailure { [weak self] err in
@@ -46,7 +46,7 @@ public final class Stabilization {
         logger.info("Updating successor...")
 
         let current = chord.currentAddress
-        guard let successor = chord.successors.value[0] else {
+        guard let successor = chord.successors.value[safe: 0] else {
             return nil
         }
 
@@ -68,7 +68,7 @@ public final class Stabilization {
     private func updateFingers() -> EventLoopFuture<Void>? {
         let current = chord.currentAddress
         let fingers = chord.fingerTable
-        guard let successor = chord.successors.value[0] else {
+        guard let successor = chord.successors.value[safe: 0] else {
             return nil
         }
 

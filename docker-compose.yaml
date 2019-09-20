@@ -22,30 +22,30 @@ services:
     networks:
       localnet:
         ipv4_address: 10.5.0.3
-  # node3:
-  #   container_name: node3
-  #   build: .
-  #   ports:
-  #     - "7007-7008:7003-7004"
-  #   environment:
-  #     - NODEID=3
-  #   depends_on:
-  #     - node2
-  #   networks:
-  #     localnet:
-  #       ipv4_address: 10.5.0.4
-  # node4:
-  #   container_name: node4
-  #   build: .
-  #   ports:
-  #     - "7009-7010:7003-7004"
-  #   environment:
-  #     - NODEID=4
-  #   depends_on:
-  #     - node3
-  #   networks:
-  #     localnet:
-  #       ipv4_address: 10.5.0.5
+  node3:
+    container_name: node3
+    build: .
+    ports:
+      - "7007-7008:7003-7004"
+    environment:
+      - NODEID=3
+    depends_on:
+      - node2
+    networks:
+      localnet:
+        ipv4_address: 10.5.0.4
+  node4:
+    container_name: node4
+    build: .
+    ports:
+      - "7009-7010:7003-7004"
+    environment:
+      - NODEID=4
+    depends_on:
+      - node3
+    networks:
+      localnet:
+        ipv4_address: 10.5.0.5
 
 networks:
   localnet:
