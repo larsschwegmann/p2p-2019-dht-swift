@@ -110,10 +110,10 @@ extension SocketAddress {
         case .v6(let v6):
             #if os(Linux)
             var tmp = v6.address.sin6_addr.__in6_u.__u6_addr8
-            var port = v6.address.sin6_port.bigEndian
+            var port = v6.address.sin6_port
             #else
             var tmp = v6.address.sin6_addr.__u6_addr.__u6_addr8
-            var port = v6.address.sin6_port.bigEndian
+            var port = v6.address.sin6_port
             #endif
             return [UInt8](UnsafeBufferPointer(start: &tmp.0, count: MemoryLayout.size(ofValue: tmp))) + Array(withUnsafeBytes(of: &port, { $0 }))
         default:
