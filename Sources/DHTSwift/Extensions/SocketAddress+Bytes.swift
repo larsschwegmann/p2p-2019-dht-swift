@@ -58,7 +58,7 @@ extension SocketAddress {
             var addr = sockaddr_in()
             addr.sin_family = sa_family_t(AF_INET)
             let port = ipv6BytesIncludingPort[16...17].withUnsafeBytes({ $0.load(as: UInt16.self) })
-            addr.sin_port = port.byteSwapped
+            addr.sin_port = port
             addr.sin_addr = ipv4Addr
             self.init(addr, host: "")
         } else {
@@ -71,7 +71,7 @@ extension SocketAddress {
             var addr = sockaddr_in6()
             addr.sin6_family = sa_family_t(AF_INET6)
             let port = ipv6BytesIncludingPort[16...17].withUnsafeBytes({ $0.load(as: UInt16.self) })
-            addr.sin6_port = in_port_t(port).bigEndian
+            addr.sin6_port = in_port_t(port)
             addr.sin6_flowinfo = 0
             addr.sin6_addr = ipv6Addr
             addr.sin6_scope_id = 0
