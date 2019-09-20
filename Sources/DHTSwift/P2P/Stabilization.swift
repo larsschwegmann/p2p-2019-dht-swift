@@ -21,12 +21,8 @@ public final class Stabilization {
     }
 
     func start() {
-        var count = 0
         self.eventLoopGroup.next().scheduleRepeatedTask(initialDelay: TimeAmount.seconds(30), delay: TimeAmount.seconds(30)) { [weak self] _ in
-            if count < 1 {
-                self?.stabilize()
-                count += 1
-            }
+            self?.stabilize()
         }
     }
 
