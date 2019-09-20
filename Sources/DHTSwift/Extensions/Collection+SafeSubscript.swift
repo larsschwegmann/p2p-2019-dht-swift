@@ -18,3 +18,19 @@ extension Array {
         }
     }
 }
+
+extension Array where Element: Hashable {
+    /// From https://stackoverflow.com/questions/25738817/removing-duplicate-elements-from-an-array-in-swift
+    var uniques: Array {
+        var buffer = Array()
+        var added = Set<Element>()
+        for elem in self {
+            if !added.contains(elem) {
+                buffer.append(elem)
+                added.insert(elem)
+            }
+        }
+        return buffer
+    }
+}
+

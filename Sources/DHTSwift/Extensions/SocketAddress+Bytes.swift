@@ -121,3 +121,10 @@ extension SocketAddress {
         }
     }
 }
+
+
+extension SocketAddress: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.getIPv6BytesIncludingPort())
+    }
+}

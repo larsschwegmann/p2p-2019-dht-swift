@@ -64,7 +64,7 @@ public final class Stabilization {
                     return []
                 }
             })
-            self.chord.setSuccessors(successorAddr: successors)
+            self.chord.setSuccessors(successorAddr: successors.uniques)
             return successors
         }.flatMap { successors -> EventLoopFuture<Void> in
             self.logger.info("Calling NOTIFY PREDECESSOR on \(successor)")
