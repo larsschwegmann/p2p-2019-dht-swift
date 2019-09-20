@@ -153,7 +153,7 @@ final class P2PServerHandler: ChannelInboundHandler {
 
             logger.info("Stored value for key \(hashedKey), replying with STORAGE PUT SUCCESS")
 
-            context.eventLoop.scheduleTask(in: TimeAmount.minutes(Int64(ttl))) {
+            context.eventLoop.scheduleTask(in: TimeAmount.seconds(Int64(ttl))) {
                 self.chord.keyStore.mutate { $0.removeValue(forKey: hashedKey) }
             }
 
