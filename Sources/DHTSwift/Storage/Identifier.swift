@@ -3,7 +3,7 @@ import NIO
 import CryptoSwift
 import UInt256
 
-enum Identifier {
+public enum Identifier {
 
     public struct Key {
         let rawKey: UInt256
@@ -14,7 +14,7 @@ enum Identifier {
     case key(Key)
     case existingHash(UInt256)
 
-    var hashValue: UInt256? {
+    public var hashValue: UInt256? {
         switch self {
         case .socketAddress(address: let addr):
             switch addr {
@@ -40,17 +40,17 @@ enum Identifier {
         }
     }
 
-    func isBetween(lhs: Identifier, rhs: Identifier) -> Bool {
+    public func isBetween(lhs: Identifier, rhs: Identifier) -> Bool {
         return self.hashValue!.isBetween(lhs: lhs.hashValue!, rhs: rhs.hashValue!)
     }
 }
 
 extension Identifier: Comparable {
-    static func < (lhs: Identifier, rhs: Identifier) -> Bool {
+    public static func < (lhs: Identifier, rhs: Identifier) -> Bool {
         return lhs.hashValue! < rhs.hashValue!
     }
 
-    static func == (lhs: Identifier, rhs: Identifier) -> Bool {
+    public static func == (lhs: Identifier, rhs: Identifier) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 }

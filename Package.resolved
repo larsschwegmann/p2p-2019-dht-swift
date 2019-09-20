@@ -21,11 +21,11 @@
       },
       {
         "package": "HeliumLogger",
-        "repositoryURL": "https://github.com/IBM-Swift/HeliumLogger.git",
+        "repositoryURL": "https://github.com/larsschwegmann/HeliumLogger.git",
         "state": {
-          "branch": null,
-          "revision": "146a36c2a91270e4213fa7d7e8192cd2e55d0ace",
-          "version": "1.9.0"
+          "branch": "master",
+          "revision": "7dedb5cc201ecde08560dc4be45878cec073aa9d",
+          "version": null
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "32760eae40e6b7cb81d4d543bb0a9f548356d9a2",
-          "version": "2.7.1"
+          "revision": "9201908b54578aa33f1d1826a5a680aca8991843",
+          "version": "2.8.0"
         }
       },
       {

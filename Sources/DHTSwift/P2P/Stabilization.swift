@@ -21,8 +21,12 @@ public final class Stabilization {
     }
 
     func start() {
-        self.eventLoopGroup.next().scheduleRepeatedTask(initialDelay: TimeAmount.seconds(0), delay: TimeAmount.hours(1)) { [weak self] _ in
-            self?.stabilize()
+        var count = 0
+        self.eventLoopGroup.next().scheduleRepeatedTask(initialDelay: TimeAmount.seconds(30), delay: TimeAmount.seconds(30)) { [weak self] _ in
+            if count < 1 {
+                self?.stabilize()
+                count += 1
+            }
         }
     }
 
@@ -34,7 +38,7 @@ public final class Stabilization {
         }
 
         combined.whenSuccess { [weak self] _ in
-            self?.logger.info("Stabilization successful!")
+            self?.logger.info("Stabilization successful! Successor: \(self?.chord.successor.value?.description ?? "nil"), Predecessor: \(self?.chord.predecessor.value?.description ?? "nil")")
         }
 
         combined.whenFailure { [weak self] err in

@@ -123,12 +123,13 @@ public final class Chord {
         let combined = successorFuture.flatMapThrowing { [weak self] successorAddress -> EventLoopFuture<SocketAddress> in
             self?.logger.info("Bootstrapping found successor: \(successorAddress)")
             // Update the finger table witho ourselves and our successor
-            self?.fingerTable.mutate { $0 = [0: successorAddress] }
-            self?.setSuccessor(successorAddr: successorAddress)
+            //self?.fingerTable.mutate { $0 = [0: successorAddress] }
+            //self?.setSuccessor(successorAddr: successorAddress)
+            self?.successor.mutate { $0 = successorAddress }
             guard let ref = self else {
                 throw ChordError.missingSelf
             }
-            for i in 1..<ref.configuration.fingers {
+            for i in 0..<ref.configuration.fingers {
                 ref.fingerTable.mutate { $0[i] = ref.currentAddress }
             }
 
@@ -142,6 +143,7 @@ public final class Chord {
         }
 
         return combined.map { [weak self] _ in
+            self?.logger.info("Stabilization complete, got successor: \(self?.successor.value?.description ?? "nil"), predecessor: \(self?.predecessor.value?.description ?? "nil")")
             self?.stabilization?.start()
             self?.logger.info("Started Stabilisation")
             return ()
