@@ -126,6 +126,7 @@ final class P2PServerHandler: ChannelInboundHandler {
         let key = Identifier.Key(rawKey: rawKey, replicationIndex: replicationIndex)
         let id = Identifier.key(key)
         let value = storagePut.value
+        let ttl = storagePut.ttl
 
         logger.info("Received STORAGE PUT request for key \(key)")
 
@@ -151,6 +152,11 @@ final class P2PServerHandler: ChannelInboundHandler {
             chord.keyStore.mutate { $0[hashedKey] = value }
 
             logger.info("Stored value for key \(hashedKey), replying with STORAGE PUT SUCCESS")
+
+            context.eventLoop.scheduleTask(in: TimeAmount.minutes(Int64(ttl))) {
+                self.chord.keyStore.mutate { $0.removeValue(forKey: hashedKey) }
+            }
+
             let storageGetSuccess = P2PStoragePutSuccess(key: rawKey)
             context.writeAndFlush(wrapOutboundOut(storageGetSuccess), promise: nil)
         }
