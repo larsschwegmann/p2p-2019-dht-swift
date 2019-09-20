@@ -359,8 +359,8 @@ struct P2PSuccessorReply: NetworkMessage {
 
     init?(serializedBodyBytes: [UInt8]) {
         var successors = [SocketAddress]()
-        for addrPos in stride(from: 0, to: serializedBodyBytes.count, by: 8) {
-            let addrBytes = Array(serializedBodyBytes[addrPos...addrPos+7])
+        for addrPos in stride(from: 0, to: serializedBodyBytes.count, by: 16) {
+            let addrBytes = Array(serializedBodyBytes[addrPos...addrPos+15])
             guard let addr = try? SocketAddress(ipv6BytesIncludingPort: addrBytes) else {
                 continue
             }
