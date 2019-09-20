@@ -96,7 +96,7 @@ public extension NetworkMessage {
 
     /// Tries to create an APIMessage object from a given byte array
     static func fromBytes(_ bytes: [UInt8]) -> Self? {
-        guard bytes.count > 4 else {
+        guard bytes.count >= 4 else {
             // Message Header is missing
             return nil
         }
@@ -105,8 +105,7 @@ public extension NetworkMessage {
             messageTypeID == Self.messageTypeID else {
             return nil
         }
-
-        let messageBody = Array(bytes[4...])
+        let messageBody = bytes.count > 4 ? Array(bytes[4...]) : []
         return Self(serializedBodyBytes: messageBody)
     }
 }
