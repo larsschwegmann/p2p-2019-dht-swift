@@ -59,6 +59,10 @@ final class P2PServerHandler: ChannelInboundHandler {
             logger.info("Replying with successor list: \(successors)")
             let reply = P2PSuccessorReply(successors: successors)
             context.writeAndFlush(wrapOutboundOut(reply), promise: nil)
+        case _ as P2PPingRequest:
+            logger.info("PONG!")
+            let reply = P2PPongReply()
+            context.writeAndFlush(wrapOutboundOut(reply), promise: nil)
         default:
             logger.error("Got unexpected message \(message)")
             context.close(promise: nil)
@@ -158,6 +162,20 @@ final class P2PServerHandler: ChannelInboundHandler {
         if try! chord.responsibleFor(identifier: Identifier.socketAddress(address: predecessorAddress)) {
             chord.predecessor.mutate { $0 = predecessorAddress }
             logger.info("PredecessorNotify: Updated predecessor to \(predecessorAddress)")
+        } else {
+            // Check if current predecessor is still alive
+            let pingFuture = chord.sendPing(peerAddress: oldPredecessor)
+            pingFuture.whenComplete { result in
+                switch result {
+                case .success(_):
+                    // Peer is still alive, do nothing
+                    self.logger.info("Peer at \(oldPredecessor.description) is still alive, not updating predecessor")
+                case .failure(_):
+                    // Peer is dead, update
+                    self.logger.info("Peer at \(oldPredecessor.description) is dead, updating predecessor to \(predecessorAddress.description)")
+                    self.chord.predecessor.mutate { $0 = predecessorAddress }
+                }
+            }
         }
 
         if chord.predecessor.value == chord.currentAddress {

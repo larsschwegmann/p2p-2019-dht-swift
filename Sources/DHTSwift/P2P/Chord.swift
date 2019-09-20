@@ -256,4 +256,13 @@ public final class Chord {
         })
     }
 
+    func sendPing(peerAddress: SocketAddress) -> EventLoopFuture<Void> {
+        let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
+        let message = P2PPingRequest()
+        let result = client.request(socketAddress: peerAddress, requestMessage: message)
+        print("PINGed peer at \(peerAddress.description)")
+        result.whenSuccess { [weak self] _ in self?.logger.info("Peer at \(peerAddress.description) responded with PONG") }
+        return result.transform(to: ())
+    }
+
 }

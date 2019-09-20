@@ -369,3 +369,23 @@ struct P2PSuccessorReply: NetworkMessage {
         self.successors = successors
     }
 }
+
+// MARK: - P2PPingRequest
+
+struct P2PPingRequest: NetworkMessage {
+    static let messageTypeID: NetworkMessageTypeID = .P2PPingRequestID
+
+    let serializedBody: [UInt8] = []
+    init?(serializedBodyBytes: [UInt8]) { }
+    init() { }
+}
+
+// MARK: - P2PPongReply
+
+struct P2PPongReply: NetworkMessage {
+    static let messageTypeID: NetworkMessageTypeID = .P2PPongReplyID
+
+    let serializedBody: [UInt8] = []
+    init?(serializedBodyBytes: [UInt8]) { }
+    init() { }
+}
