@@ -26,6 +26,7 @@ public final class Stabilization {
         }
     }
 
+    /// Called every stabilization_interval seconds
     private func stabilize() {
         logger.info("Running Stabilization...")
 
@@ -42,6 +43,7 @@ public final class Stabilization {
         }
     }
 
+    /// Retrieves our successor's successor list and updates our own
     private func updateSuccessors() -> EventLoopFuture<Void>? {
         logger.info("Updating successors...")
 
@@ -81,20 +83,11 @@ public final class Stabilization {
             self.logger.info("Calling NOTIFY PREDECESSOR on \(successor)")
             return self.chord.notifyPredecessor(address: current, peerAddress: successors[0]).transform(to: ())
         }
-//            .map { _ in
-//            let currentId = Identifier.socketAddress(address: current)
-//            let successorId = Identifier.socketAddress(address: successor)
-//            let newSuccessorId = Identifier.socketAddress(address: newSuccessor)
-//
-//            if newSuccessorId.isBetween(lhs: currentId, rhs: successorId) {
-//                self.logger.info("Updating successor to address \(newSuccessor)")
-//                self.chord.setSuccessor(successorAddr: newSuccessor)
-//            }
-//        }
 
         return futuresFlattened
     }
 
+    /// Updates our finger table by asking our successor
     private func updateFingers() -> EventLoopFuture<Void>? {
         let current = chord.currentAddress
         let fingers = chord.fingerTable

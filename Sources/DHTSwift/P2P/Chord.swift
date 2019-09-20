@@ -209,6 +209,7 @@ public final class Chord {
         })
     }
 
+    /// Sends a P2PStorageGet message for a given key to a given peer
     func getValue(key: Identifier.Key, peerAddress: SocketAddress) -> EventLoopFuture<[UInt8]> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let message = P2PStorageGet(replicationIndex: key.replicationIndex, key: key.rawKey)
@@ -224,6 +225,7 @@ public final class Chord {
         }
     }
 
+    /// Sends a P2PStoragePut message for a given key and value to the given peer
     func putValue(key: Identifier.Key, value: [UInt8], ttl: UInt16, peerAddress: SocketAddress) -> EventLoopFuture<Void> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let message = P2PStoragePut(ttl: ttl,
@@ -242,6 +244,7 @@ public final class Chord {
         })
     }
 
+    /// Sends a P2PPredecessorNotify message to the given Peer
     func notifyPredecessor(address: SocketAddress, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let message = P2PPredecessorNotify(ipAddr: address.getIPv6Bytes()!, port: UInt16(address.port ?? 0))
@@ -255,6 +258,7 @@ public final class Chord {
         })
     }
 
+    /// Sends a Ping message to the given peer and expects a pong response
     func sendPing(peerAddress: SocketAddress) -> EventLoopFuture<Void> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let message = P2PPingRequest()
