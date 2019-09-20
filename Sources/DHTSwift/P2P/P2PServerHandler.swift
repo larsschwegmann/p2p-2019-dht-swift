@@ -49,12 +49,14 @@ final class P2PServerHandler: ChannelInboundHandler {
         case let storagePut as P2PStoragePut:
             handleStoragePut(storagePut: storagePut, context: context)
         case _ as P2PSuccessorRequest:
+            logger.info("Received P2PSuccessorRequest")
             var successors = [SocketAddress]()
             if let predecessorAddr = chord.predecessor.value {
                 successors.append(predecessorAddr)
             }
             successors.append(chord.currentAddress)
             successors.append(contentsOf: chord.successors.value)
+            logger.info("Replying with successor list: \(successors)")
             let reply = P2PSuccessorReply(successors: successors)
             context.writeAndFlush(wrapOutboundOut(reply), promise: nil)
         default:
