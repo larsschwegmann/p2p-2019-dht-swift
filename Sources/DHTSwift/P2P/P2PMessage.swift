@@ -1,5 +1,6 @@
 import Foundation
 import UInt256
+import NIO
 
 // MARK: - P2PStorageGet
 
@@ -327,5 +328,43 @@ struct P2PPredecessorReply: NetworkMessage, Equatable {
         }
         self.ipAddr = Array(serializedBodyBytes[0...15])
         self.port = serializedBodyBytes[16...].withUnsafeBytes({ $0.load(as: UInt16.self) }).byteSwapped
+    }
+}
+
+// MARK: - P2PSuccessorRequest
+
+struct P2PSuccessorRequest: NetworkMessage {
+    static let messageTypeID: NetworkMessageTypeID = .P2PSuccessorRequestID
+
+    let serializedBody: [UInt8] = []
+
+    init?(serializedBodyBytes: [UInt8]) { }
+}
+
+// MARK: - P2PSuccessorReply
+
+struct P2PSuccessorReply: NetworkMessage {
+    static let messageTypeID: NetworkMessageTypeID = .P2PSuccessorReplyID
+
+    let successors: [SocketAddress]
+
+    var serializedBody: [UInt8] {
+        return successors.flatMap { $0.getIPv6BytesIncludingPort() ?? [] }
+    }
+
+    init(successors: [SocketAddress]) {
+        self.successors = successors
+    }
+
+    init?(serializedBodyBytes: [UInt8]) {
+        var successors = [SocketAddress]()
+        for addrPos in stride(from: 0, to: serializedBodyBytes.count, by: 8) {
+            let addrBytes = Array(serializedBodyBytes[addrPos...addrPos+7])
+            guard let addr = try? SocketAddress(ipv6BytesIncludingPort: addrBytes) else {
+                continue
+            }
+            successors.append(addr)
+        }
+        self.successors = successors
     }
 }

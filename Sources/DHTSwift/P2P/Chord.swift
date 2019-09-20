@@ -23,7 +23,8 @@ public final class Chord {
     var keyStore = Atomic([UInt256:[UInt8]]())
     var fingerTable = Atomic([Int: SocketAddress]()) // Use dict instead of array for safe conditional access
     var predecessor = Atomic<SocketAddress?>(nil)
-    var successor = Atomic<SocketAddress?>(nil)
+    //var successor = Atomic<SocketAddress?>(nil)
+    var successors = Atomic([SocketAddress]())
     var currentAddress: SocketAddress {
         return try! SocketAddress(ipAddress: self.configuration.listenAddress, port: self.configuration.listenPort)
     }
@@ -77,16 +78,16 @@ public final class Chord {
         // TODO: is self.successor always not nil?
         //logger.info("zeros: \(zeros), \(fingerTable.value[zeros]?.description ?? "nil"), \(self.successor.value?.description ?? "nil")")
 
-        let responsiblePeer = fingerTable.value[zeros] ?? self.successor.value!
+        let responsiblePeer = fingerTable.value[zeros] ?? self.successors.value.first!
         //logger.info("Peer at \(responsiblePeer) is responsible")
         return responsiblePeer
     }
 
     func setSuccessor(successorAddr: SocketAddress) {
-        self.successor.mutate { $0 = successorAddr }
-        let diff = Identifier.socketAddress(address: self.successor.value!).hashValue! - Identifier.socketAddress(address: self.currentAddress).hashValue!
+        self.successors.mutate { $0[0] = successorAddr }
+        let diff = Identifier.socketAddress(address: self.successors.value[0]).hashValue! - Identifier.socketAddress(address: self.currentAddress).hashValue!
         for i in diff.leadingZeroBitCount..<self.fingerTable.value.count {
-            self.fingerTable.mutate { $0[i] = successor.value! }
+            self.fingerTable.mutate { $0[i] = successors.value[0] }
         }
     }
 
@@ -104,7 +105,7 @@ public final class Chord {
         }
         self.predecessor.mutate { $0 = currentAddress }
         //self.setSuccessor(successorAddr: currentAddress)
-        self.successor.mutate { $0 = currentAddress }
+        self.successors.mutate { $0[0] = currentAddress }
         self.stabilization = Stabilization(eventLoopGroup: self.eventLoopGroup, config: self.configuration, chord: self)
         self.stabilization?.start()
         return self.eventLoopGroup.future()
@@ -125,7 +126,7 @@ public final class Chord {
             // Update the finger table witho ourselves and our successor
             //self?.fingerTable.mutate { $0 = [0: successorAddress] }
             //self?.setSuccessor(successorAddr: successorAddress)
-            self?.successor.mutate { $0 = successorAddress }
+            self?.successors.mutate { $0[0] = successorAddress }
             guard let ref = self else {
                 throw ChordError.missingSelf
             }
@@ -143,7 +144,7 @@ public final class Chord {
         }
 
         return combined.map { [weak self] _ in
-            self?.logger.info("Stabilization complete, got successor: \(self?.successor.value?.description ?? "nil"), predecessor: \(self?.predecessor.value?.description ?? "nil")")
+            self?.logger.info("Bootstrapping complete, got successor: \(self?.successors.value.map{ $0.description }.description ?? "nil"), predecessor: \(self?.predecessor.value?.description ?? "nil")")
             self?.stabilization?.start()
             self?.logger.info("Started Stabilisation")
             return ()
