@@ -155,6 +155,7 @@ final class P2PServerHandler: ChannelInboundHandler {
 
             context.eventLoop.scheduleTask(in: TimeAmount.seconds(Int64(ttl))) {
                 self.chord.keyStore.mutate { $0.removeValue(forKey: hashedKey) }
+                self.logger.info("TTL of key \(hashedKey) expired, deleting entry")
             }
 
             let storageGetSuccess = P2PStoragePutSuccess(key: rawKey)
