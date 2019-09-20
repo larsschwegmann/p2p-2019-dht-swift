@@ -18,7 +18,8 @@ enum ChordError: LocalizedError {
 }
 
 // MARK: Chord
-
+/// A Chord object represents a node in the Chord network. It consists of a key-value storage and a finger table.
+/// It also stores a list of successors and its current IP address.
 public final class Chord {
 
     // MARK: Properties
@@ -150,7 +151,6 @@ public final class Chord {
 
     /**
      Finds the peer responsible for the given key
-     le
     */
     func findPeer(forIdentifier identifier: Identifier, peerAddress: SocketAddress) -> EventLoopFuture<SocketAddress> {
         let hash = identifier.hashValue!
@@ -183,9 +183,7 @@ public final class Chord {
         return reqFactory(peerAddress).flatMap(responseHandler)
     }
 
-    /**
-            Returns an array of successors of a peer
-        */
+    /// Returns an array of successors of a peer
     func getSuccessors(peerAddress: SocketAddress) -> EventLoopFuture<Result<[SocketAddress], ChordError>> {
         let client = P2PClient(eventLoopGroup: self.eventLoopGroup, timeout: self.timeout)
         let successorsMessageRequest = P2PSuccessorRequest()

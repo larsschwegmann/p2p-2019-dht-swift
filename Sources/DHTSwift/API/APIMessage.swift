@@ -2,7 +2,7 @@ import Foundation
 import UInt256
 
 // MARK: - DHTPut
-
+/// Represents a DHTPut message.
 public struct DHTPut: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTPutID
 
@@ -58,7 +58,7 @@ public struct DHTPut: NetworkMessage, Equatable {
 }
 
 // MARK: - DHTGet
-
+/// Represents a DHTGet message.
 public struct DHTGet: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTGetID
 
@@ -85,7 +85,7 @@ public struct DHTGet: NetworkMessage, Equatable {
 }
 
 // MARK: - DHTSuccess
-
+/// Represents a DHTSuccess message.
 public struct DHTSuccess: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTSuccessID
 
@@ -123,7 +123,7 @@ public struct DHTSuccess: NetworkMessage, Equatable {
 }
 
 // MARK: - DHTFailure
-
+/// Represents a DHTFailure message.
 public struct DHTFailure: NetworkMessage, Equatable {
     public static let messageTypeID: NetworkMessageTypeID = .DHTFailureID
 

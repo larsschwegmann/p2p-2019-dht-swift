@@ -5,7 +5,7 @@ import NIOExtras
 import UInt256
 
 // MARK: - APIServer
-
+/// An APIServer is used to accept requests to the Chord network. Requests to the APIServer are handleded by the `APIServerHandler`.
 public final class APIServer {
 
     // MARK: Properties

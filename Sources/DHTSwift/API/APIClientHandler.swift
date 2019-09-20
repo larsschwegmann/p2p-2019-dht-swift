@@ -3,7 +3,8 @@ import Logging
 import NIO
 
 // MARK: - APIClientHandler
-
+/// An `APIClientHandler` is used to handle requests for key lookups from the APIClient.
+/// The responses are either a DHT success or failure.
 final class APIClientHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias OutboundOut = ByteBuffer

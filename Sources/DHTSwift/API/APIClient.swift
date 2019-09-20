@@ -3,7 +3,7 @@ import Logging
 import NIO
 
 // MARK: - APIClient
-
+/// An `APIClient` serves as an interface for the user to send `GET` and `PUT` messages to the P2P network.
 public final class APICLient {
 
     // MARK: Properties

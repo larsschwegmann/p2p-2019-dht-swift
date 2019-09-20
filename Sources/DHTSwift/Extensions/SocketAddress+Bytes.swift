@@ -4,6 +4,12 @@ import UInt256
 
 extension SocketAddress {
 
+    /**
+    Initializes a `SocketAddress` from a `UInt8` byte array(IPv6 address) and a `UInt16`(port).
+
+     - Parameter ipv6Bytes: The IPv6 address stored in a UInt8 byte array.
+     - Parameter port: The port stored as a UInt16.
+    */
     init(ipv6Bytes: [UInt8], port: UInt16) throws {
         let bytes = (ipv6Bytes[0], ipv6Bytes[1], ipv6Bytes[2], ipv6Bytes[3], ipv6Bytes[4], ipv6Bytes[5], ipv6Bytes[6], ipv6Bytes[7],
                      ipv6Bytes[8], ipv6Bytes[9], ipv6Bytes[10], ipv6Bytes[11], ipv6Bytes[12], ipv6Bytes[13], ipv6Bytes[14], ipv6Bytes[15])
@@ -33,7 +39,11 @@ extension SocketAddress {
         }
     }
 
+    /**
+     Initializes a `SocketAddress` from a UInt8 byte array(IPv6 address and port).
 
+     - Parameter ipv6BytesIncludingPort: The IPv6 address and port stored in a UInt8 byte array.
+     */
     init(ipv6BytesIncludingPort: [UInt8]) throws {
         let bytes = (ipv6BytesIncludingPort[0],
                      ipv6BytesIncludingPort[1],
@@ -79,8 +89,7 @@ extension SocketAddress {
         }
     }
 
-
-    /// Returns the the bytes of the SocketAddress regarding to the doku of bene
+    /// Returns the bytes of the SocketAddress with respect to the Rust implementation of 2018.
     func getIPv6Bytes() -> [UInt8]? {
         switch self {
         case .v4(let v4):
@@ -98,6 +107,9 @@ extension SocketAddress {
         }
     }
 
+    /**
+     Returns the bytes of the SocketAddress and port.
+     */
     func getIPv6BytesIncludingPort() -> [UInt8]? {
         switch self {
         case .v4(let v4):
@@ -121,7 +133,6 @@ extension SocketAddress {
         }
     }
 }
-
 
 extension SocketAddress: Hashable {
     public func hash(into hasher: inout Hasher) {

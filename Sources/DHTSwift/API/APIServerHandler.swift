@@ -3,6 +3,8 @@ import Logging
 import NIO
 import UInt256
 
+// MARK: - APIServerHandler
+///
 final class APIServerHandler: ChannelInboundHandler {
     public typealias InboundIn = NetworkMessage
     public typealias OutboundOut = NetworkMessage
