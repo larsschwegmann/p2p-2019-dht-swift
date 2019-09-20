@@ -50,6 +50,7 @@ final class P2PServerHandler: ChannelInboundHandler {
             handleStoragePut(storagePut: storagePut, context: context)
         default:
             logger.error("Got unexpected message \(message)")
+            context.close(promise: nil)
             return
         }
     }

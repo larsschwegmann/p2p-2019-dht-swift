@@ -21,7 +21,7 @@ public final class Stabilization {
     }
 
     func start() {
-        self.eventLoopGroup.next().scheduleRepeatedTask(initialDelay: TimeAmount.seconds(30), delay: TimeAmount.seconds(30)) { [weak self] _ in
+        self.eventLoopGroup.next().scheduleRepeatedTask(initialDelay: TimeAmount.seconds(10), delay: TimeAmount.seconds(30)) { [weak self] _ in
             self?.stabilize()
         }
     }

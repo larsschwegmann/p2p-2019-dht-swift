@@ -1,6 +1,8 @@
 # Build DHTWsiftExecutable in full fledged Swift image
 FROM swift:5.0 as builder
 WORKDIR /root
+COPY Package.swift .
+RUN swift package update
 COPY . .
 RUN swift build -c release
 
