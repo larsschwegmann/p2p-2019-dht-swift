@@ -88,8 +88,10 @@ public final class Chord {
     func setSuccessors(successorAddr: [SocketAddress]) {
         self.successors.mutate { $0 = successorAddr }
         let diff = Identifier.socketAddress(address: self.successors.value[0]).hashValue! - Identifier.socketAddress(address: self.currentAddress).hashValue!
-        for i in (diff.leadingZeroBitCount - self.fingerTable.value.count)..<self.fingerTable.value.count {
-            self.fingerTable.mutate { $0[i] = successors.value[0] }
+        if diff.leadingZeroBitCount < self.fingerTable.value.count {
+            for i in diff.leadingZeroBitCount..<self.fingerTable.value.count {
+                self.fingerTable.mutate { $0[i] = successors.value[0] }
+            }
         }
     }
 
